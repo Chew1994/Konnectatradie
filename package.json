@@ -15,6 +15,6 @@
     "leaflet": "latest"
   },
   "devDependencies": {
-    "netlify-cli": "latest"
+    "netlify-cli": "26.2.0"
   }
 }
