@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "netlify dev",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -13,8 +13,5 @@
     "lucide-react": "latest",
     "stripe": "latest",
     "leaflet": "latest"
-  },
-  "devDependencies": {
-    "netlify-cli": "26.2.0"
   }
 }
