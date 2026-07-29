@@ -383,7 +383,7 @@ function Home({ setTab, goPostJob }) {
           Compare quotes, chat directly, and hire with confidence — all in one place.
         </p>
         <div className="hero-actions">
-          <button className="primary big" onClick={() => setTab("search")}>Find a Tradie <Search size={18}/></button>
+          <button className="primary big" onClick={() => setTab("search")}>Find a local Tradie <Search size={18}/></button>
           <button className="secondary big" onClick={goPostJob}>Post a Job <ArrowRight size={18}/></button>
         </div>
       </div>
@@ -1760,7 +1760,7 @@ function MapJobCard({ job, onOpen }) {
 function SearchPage({ visibleTradies, filters, setFilters, photosFor, avgRating, reviewsFor, setSelectedTradie, setTab }) {
   return <section>
     <div className="page-title">
-      <h1>Find a Tradie</h1>
+      <h1>Find a local Tradie</h1>
       <p>Search approved tradespeople by trade and county. Check reviews, portfolios and availability before sending a request.</p>
     </div>
 
