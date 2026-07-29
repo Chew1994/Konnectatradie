@@ -1,0 +1,20 @@
+{
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "@supabase/supabase-js": "latest",
+    "lucide-react": "latest",
+    "stripe": "latest",
+    "leaflet": "latest"
+  },
+  "devDependencies": {
+    "netlify-cli": "latest"
+  }
+}

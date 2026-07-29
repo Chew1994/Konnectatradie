@@ -1,0 +1,24 @@
+EMAIL NOTIFICATIONS - IMPORTANT
+
+This emergency patch adds in-app dashboard notifications and message popups.
+
+For real email notifications, frontend code alone is not enough.
+You need a backend sender such as:
+- Supabase Edge Function + Resend
+- Supabase Edge Function + SendGrid
+- Supabase database webhook calling an email service
+
+Recommended events to email:
+1. Customer receives a quote
+2. Tradesperson quote is accepted
+3. Customer/tradesperson receives booking request
+4. New chat message received
+
+Recommended email subjects:
+- New quote received on KonnectATradie
+- Your quote was accepted
+- New booking request
+- New message about your job
+
+Next safe build step:
+"Add Supabase Edge Function email notifications"
