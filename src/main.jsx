@@ -15,9 +15,15 @@ const BOOKING_FEE = 5;
 
 async function sendPlatformNotification(payload) {
   try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+
     await fetch("/.netlify/functions/notify-email", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
       body: JSON.stringify(payload)
     });
   } catch (error) {
@@ -1409,10 +1415,19 @@ function DirectJobCard({ job, setMessage, loadPrivateData, role = "tradesperson"
     const { error } = await supabase.from("job_requests").update(updates).eq("id", job.id);
     if (error) return setMessage(error.message);
 
-    fetch("/.netlify/functions/notify-booking-status", {
-      method: "POST",
-      body: JSON.stringify({ jobRequestId: job.id, status: nextStatus })
-    }).catch(() => {});
+const { data: { session } } = await supabase.auth.getSession();
+
+fetch("/.netlify/functions/notify-booking-status", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session?.access_token}`
+  },
+  body: JSON.stringify({
+    jobRequestId: job.id,
+    status: nextStatus
+  })
+}).catch(() => {});
 
     setMessage(`Booking updated to ${nextStatus.replace("_", " ")}.`);
     loadPrivateData();

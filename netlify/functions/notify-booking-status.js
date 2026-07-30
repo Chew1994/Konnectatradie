@@ -64,13 +64,69 @@ function tradieHtml(status, job, customerName) {
   };
   return `<h2>${titleMap[status] || "Booking update"}</h2><p>${bodyMap[status] || "A booking has been updated."}</p><p><strong>Job:</strong> ${job.job_description || job.trade || "Job request"}</p><p><strong>County:</strong> ${job.county || ""}</p>`;
 }
+function getBearerToken(event) {
+  const auth =
+    event.headers?.authorization ||
+    event.headers?.Authorization;
 
+  if (!auth?.startsWith("Bearer ")) {
+    return null;
+  }
+
+  return auth.slice(7);
+}
+
+async function authenticateUser(event) {
+  const token = getBearerToken(event);
+  const url = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!token || !url || !serviceKey) {
+    return null;
+  }
+
+  const result = await fetch(`${url}/auth/v1/user`, {
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!result.ok) {
+    return null;
+  }
+
+  return result.json();
+}
 export async function handler(event) {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method not allowed" };
+const user = await authenticateUser(event);
 
+if (!user) {
+  return {
+    statusCode: 401,
+    body: JSON.stringify({
+      error: "Authentication required."
+    })
+  };
+}
   try {
     const { jobRequestId, status } = JSON.parse(event.body || "{}");
+const allowedStatuses = [
+  "accepted",
+  "declined",
+  "in_progress",
+  "completed"
+];
 
+if (!jobRequestId || !allowedStatuses.includes(status)) {
+  return {
+    statusCode: 400,
+    body: JSON.stringify({
+      error: "Invalid booking status request."
+    })
+  };
+}
     const { data: job, error } = await supabaseAdmin
       .from("job_requests")
       .select("*, tradesperson_profiles(business_name, user_id)")
@@ -78,7 +134,23 @@ export async function handler(event) {
       .single();
 
     if (error || !job) return { statusCode: 404, body: JSON.stringify({ error: "Job not found" }) };
+if (job.tradesperson_profiles?.user_id !== user.id) {
+  return {
+    statusCode: 403,
+    body: JSON.stringify({
+      error: "You are not allowed to send notifications for this booking."
+    })
+  };
+}const currentStatus = job.lifecycle_status || job.status;
 
+if (currentStatus !== status) {
+  return {
+    statusCode: 409,
+    body: JSON.stringify({
+      error: "Booking status does not match the saved booking."
+    })
+  };
+}
     const { data: customerProfile } = await supabaseAdmin
       .from("profiles")
       .select("email, full_name")

@@ -54,7 +54,7 @@ exports.handler = async (event) => {
 
     const params = new URLSearchParams({
       select: "id,email,full_name,phone",
-      full_name: `ilike.*${String(fullName).trim()}*`,
+      full_name: `ilike.${String(fullName).trim()}`,
       phone: `eq.${String(phone).trim()}`
     });
 
