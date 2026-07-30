@@ -2106,8 +2106,6 @@ function VerificationUpload({ userId, tradie, documents, setMessage, loadPrivate
     const path = `${tradie.id}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage.from("verification-documents").upload(path, file, { upsert: false });
     if (uploadError) return setMessage(uploadError.message);
-
-    
     const fileUrl = path;
 
     const { error } = await supabase.from("tradesperson_documents").insert({
