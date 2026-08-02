@@ -2619,6 +2619,7 @@ function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, setMe
   const [recentlyAcceptedQuote, setRecentlyAcceptedQuote] = useState(null);
   const [quoteSubmitting, setQuoteSubmitting] = useState(false);
   const [recentlySubmittedQuote, setRecentlySubmittedQuote] = useState(null);
+  const [quoteStatusOverrides, setQuoteStatusOverrides] = useState({});
 
 async function submitQuote(e) {
   e.preventDefault();
@@ -2737,87 +2738,181 @@ async function submitQuote(e) {
   }
 
   async function acceptQuote(q) {
+    if (!q?.id || profile.role !== "customer") return;
+
     setQuoteActionId(q.id);
 
-    const { error: quoteError } = await supabase
-      .from("job_quotes")
-      .update({ status: "accepted" })
-      .eq("id", q.id);
+    try {
+      const { error: quoteError } = await supabase
+        .from("job_quotes")
+        .update({ status: "accepted" })
+        .eq("id", q.id);
 
-    const { error: postError } = await supabase
-      .from("job_posts")
-      .update({
-        status: "quote_accepted",
-        accepted_quote_id: q.id,
-        accepted_tradesperson_id: q.tradesperson_id
-      })
-      .eq("id", jobPost.id);
-
-    setQuoteActionId(null);
-
-    if (quoteError || postError) {
-      setMessage((quoteError || postError).message);
-      return;
-    }
-
-    setRecentlyAcceptedQuote({ ...q, status: "accepted" });
-    setQuoteFilter("accepted");
-    sendPlatformNotification({
-      event: "quote_accepted",
-      jobPostId: jobPost.id,
-      quoteId: q.id,
-      senderUserId: profile.id
-    });
-    setMessage(
-      "Quote accepted. The tradesperson has been notified and chat is now open."
-    );
-    await loadPrivateData();
-
-    setTimeout(() => {
-      const chatPanel = document.getElementById("confirmed-job-chat-panel");
-      if (chatPanel) {
-        chatPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (quoteError) {
+        setMessage(quoteError.message);
+        return;
       }
-    }, 120);
+
+      const { error: postError } = await supabase
+        .from("job_posts")
+        .update({
+          status: "quote_accepted",
+          accepted_quote_id: q.id,
+          accepted_tradesperson_id: q.tradesperson_id
+        })
+        .eq("id", jobPost.id);
+
+      if (postError) {
+        await supabase
+          .from("job_quotes")
+          .update({ status: "pending" })
+          .eq("id", q.id);
+
+        setMessage(postError.message);
+        return;
+      }
+
+      const accepted = { ...q, status: "accepted" };
+
+      setQuoteStatusOverrides((current) => ({
+        ...current,
+        [q.id]: "accepted"
+      }));
+
+      setRecentlyAcceptedQuote(accepted);
+      setQuoteFilter("accepted");
+
+      sendPlatformNotification({
+        event: "quote_accepted",
+        jobPostId: jobPost.id,
+        quoteId: q.id,
+        senderUserId: profile.id
+      });
+
+      setMessage(
+        "Quote accepted. The tradesperson has been notified and chat is now open."
+      );
+
+      await loadPrivateData();
+
+      setTimeout(() => {
+        document
+          .getElementById("confirmed-job-chat-panel")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+    } catch (error) {
+      setMessage(error?.message || "Quote could not be accepted.");
+    } finally {
+      setQuoteActionId(null);
+    }
   }
 
   async function declineQuote(q) {
-    setQuoteActionId(q.id);
-    const { error } = await supabase.from("job_quotes").update({ status: "declined" }).eq("id", q.id);
-    setQuoteActionId(null);
+    if (!q?.id || profile.role !== "customer") return;
 
-    if (error) {
-      setMessage(error.message);
-    } else {
+    setQuoteActionId(q.id);
+
+    try {
+      const { error } = await supabase
+        .from("job_quotes")
+        .update({ status: "declined" })
+        .eq("id", q.id);
+
+  const loadedQuotes = quotesFor(jobPost.id) || [];
+
+  const quoteCandidates =
+    recentlySubmittedQuote &&
+    !loadedQuotes.some((quote) => quote.id === recentlySubmittedQuote.id)
+      ? [...loadedQuotes, recentlySubmittedQuote]
+      : loadedQuotes;
+
+  const qlist = quoteCandidates.map((quote) => {
+    const overriddenStatus = quoteStatusOverrides[quote.id];
+
+    return overriddenStatus
+      ? { ...quote, status: overriddenStatus }
+      : quote;
+  });
+
+      if (recentlyAcceptedQuote?.id === q.id) {
+        setRecentlyAcceptedQuote(null);
+      }
+
+      setQuoteFilter("active");
       setMessage("Quote declined. You can continue reviewing other quotes.");
-      loadPrivateData();
+      await loadPrivateData();
+    } catch (error) {
+      setMessage(error?.message || "Quote could not be declined.");
+    } finally {
+      setQuoteActionId(null);
     }
   }
 
   async function cancelAcceptedQuote(q) {
     if (!q?.id) return;
+
     const isCustomer = profile.role === "customer";
+
     const confirmed = window.confirm(
       isCustomer
         ? "Cancel this accepted job? You can still accept another quote afterwards."
         : "Cancel this accepted job? Use this if the customer is not proceeding after discussion."
     );
+
     if (!confirmed) return;
 
     setQuoteActionId(q.id);
-    const { error: quoteError } = await supabase.from("job_quotes").update({ status: "cancelled" }).eq("id", q.id);
-    const { error: postError } = await supabase.from("job_posts").update({ status: "open", accepted_quote_id: null, accepted_tradesperson_id: null }).eq("id", jobPost.id);
-    setQuoteActionId(null);
 
-    if (quoteError || postError) {
-      setMessage((quoteError || postError).message);
-      return;
+    try {
+      const { error: quoteError } = await supabase
+        .from("job_quotes")
+        .update({ status: "cancelled" })
+        .eq("id", q.id);
+
+      if (quoteError) {
+        setMessage(quoteError.message);
+        return;
+      }
+
+      const { error: postError } = await supabase
+        .from("job_posts")
+        .update({
+          status: "open",
+          accepted_quote_id: null,
+          accepted_tradesperson_id: null
+        })
+        .eq("id", jobPost.id);
+
+      if (postError) {
+        await supabase
+          .from("job_quotes")
+          .update({ status: "accepted" })
+          .eq("id", q.id);
+
+        setMessage(postError.message);
+        return;
+      }
+
+      setQuoteStatusOverrides((current) => ({
+        ...current,
+        [q.id]: "cancelled"
+      }));
+
+      setRecentlyAcceptedQuote(null);
+      setQuoteFilter("active");
+
+      setMessage(
+        isCustomer
+          ? "Job cancelled. You can now accept another quote."
+          : "Job cancelled. The customer can now choose another quote."
+      );
+
+      await loadPrivateData();
+    } catch (error) {
+      setMessage(error?.message || "The accepted job could not be cancelled.");
+    } finally {
+      setQuoteActionId(null);
     }
-
-    setRecentlyAcceptedQuote(null);
-    setQuoteFilter("active");
-    setMessage(isCustomer ? "Job cancelled. You can now accept another quote." : "Job cancelled. The customer can now choose another quote.");
-    loadPrivateData();
   }
 
 const loadedQuotes = quotesFor(jobPost.id);
