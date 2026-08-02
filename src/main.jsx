@@ -2617,62 +2617,168 @@ function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, setMe
   const [messageSending, setMessageSending] = useState(false);
   const [quoteFilter, setQuoteFilter] = useState("active");
   const [recentlyAcceptedQuote, setRecentlyAcceptedQuote] = useState(null);
+  const [quoteSubmitting, setQuoteSubmitting] = useState(false);
+  const [recentlySubmittedQuote, setRecentlySubmittedQuote] = useState(null);
+
+async function submitQuote(e) {
+  e.preventDefault();
+
+  if (profile.role === "customer") return;
+
+  const form = e.currentTarget;
+  const formData = new FormData(form);
+  const price = Number(formData.get("price_eur"));
+  const note = String(formData.get("note") || "").trim();
+
+  if (!Number.isFinite(price) || price <= 0) {
+    setMessage("Enter a valid quote amount.");
+    return;
+  }
+
+  setQuoteSubmitting(true);
+
+  try {
+    const { data: tradieProfile, error: profileError } = await supabase
+      .from("tradesperson_profiles")
+      .select("id")
+      .eq("user_id", profile.id)
+      .maybeSingle();
+
+    if (profileError) {
+      setMessage(profileError.message);
+      return;
+    }
+
+    if (!tradieProfile?.id) {
+      setMessage("Create your tradesperson profile before sending a quote.");
+      return;
+    }
+
+    const { data: createdQuote, error: quoteError } = await supabase
+      .from("job_quotes")
+      .insert({
+        job_post_id: jobPost.id,
+        tradesperson_id: tradieProfile.id,
+        price_eur: price,
+        note,
+        status: "pending"
+      })
+      .select(
+        "id, job_post_id, tradesperson_id, price_eur, note, status, created_at"
+      )
+      .single();
+
+    if (quoteError) {
+      setMessage(quoteError.message || "Quote could not be sent.");
+      return;
+    }
+
+    sendPlatformNotification({
+      event: "quote_received",
+      jobPostId: jobPost.id,
+      quoteId: createdQuote?.id,
+      senderUserId: profile.id
+    });
+
+    setRecentlySubmittedQuote(createdQuote);
+    form.reset();
+    setQuoteFilter("active");
+    setMessage("Quote sent. The customer has been notified.");
+    await loadPrivateData();
+
+  } catch (error) {
+    setMessage(error?.message || "Quote could not be sent.");
+  } finally {
+    setQuoteSubmitting(false);
+  }
+}
+
 
   async function sendMessage(e) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const msg = f.get("message");
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const msg = String(formData.get("message") || "").trim();
     if (!msg) return;
 
     setMessageSending(true);
-    const { error } = await supabase.from("job_messages").insert({ job_post_id: jobPost.id, sender_id: profile.id, message: msg });
+    const { error } = await supabase
+      .from("job_messages")
+      .insert({
+        job_post_id: jobPost.id,
+        sender_id: profile.id,
+        message: msg
+      });
     setMessageSending(false);
 
     if (error) {
       setMessage(error.message);
-    } else {
-      const accepted = quotesFor(jobPost.id).find(q => q.status === "accepted");
-      const tradie = accepted ? tradespeople.find(t => t.id === accepted.tradesperson_id) : null;
-      const recipientUserId = profile.role === "customer" ? tradie?.user_id : jobPost.customer_id;
-
-      sendPlatformNotification({
-        event: "message_received",
-        jobPostId: jobPost.id,
-        senderUserId: profile.id,
-        recipientUserId,
-        messageText: msg
-      });
-
-      setMessage("Message sent.");
-      e.currentTarget.reset();
-      loadPrivateData();
+      return;
     }
+
+    const accepted = quotesFor(jobPost.id).find((q) => q.status === "accepted");
+    const tradie = accepted
+      ? tradespeople.find((t) => t.id === accepted.tradesperson_id)
+      : null;
+    const recipientUserId =
+      profile.role === "customer" ? tradie?.user_id : jobPost.customer_id;
+
+    sendPlatformNotification({
+      event: "message_received",
+      jobPostId: jobPost.id,
+      senderUserId: profile.id,
+      recipientUserId,
+      messageText: msg
+    });
+
+    setMessage("Message sent.");
+    form.reset();
+    await loadPrivateData();
   }
 
   async function acceptQuote(q) {
     setQuoteActionId(q.id);
-    const { error: e1 } = await supabase.from("job_quotes").update({ status: "accepted" }).eq("id", q.id);
-    const { error: e2 } = await supabase.from("job_posts").update({ status: "quote_accepted", accepted_quote_id: q.id, accepted_tradesperson_id: q.tradesperson_id }).eq("id", jobPost.id);
+
+    const { error: quoteError } = await supabase
+      .from("job_quotes")
+      .update({ status: "accepted" })
+      .eq("id", q.id);
+
+    const { error: postError } = await supabase
+      .from("job_posts")
+      .update({
+        status: "quote_accepted",
+        accepted_quote_id: q.id,
+        accepted_tradesperson_id: q.tradesperson_id
+      })
+      .eq("id", jobPost.id);
+
     setQuoteActionId(null);
 
-    if (e1 || e2) {
-      setMessage((e1 || e2).message);
-    } else {
-      setRecentlyAcceptedQuote({ ...q, status: "accepted" });
-      setQuoteFilter("accepted");
-      sendPlatformNotification({
-        event: "quote_accepted",
-        jobPostId: jobPost.id,
-        quoteId: q.id,
-        senderUserId: profile.id
-      });
-      setMessage("Quote accepted. The tradesperson has been notified and chat is now open.");
-      loadPrivateData();
-      setTimeout(() => {
-        const chatPanel = document.getElementById("confirmed-job-chat-panel");
-        if (chatPanel) chatPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 120);
+    if (quoteError || postError) {
+      setMessage((quoteError || postError).message);
+      return;
     }
+
+    setRecentlyAcceptedQuote({ ...q, status: "accepted" });
+    setQuoteFilter("accepted");
+    sendPlatformNotification({
+      event: "quote_accepted",
+      jobPostId: jobPost.id,
+      quoteId: q.id,
+      senderUserId: profile.id
+    });
+    setMessage(
+      "Quote accepted. The tradesperson has been notified and chat is now open."
+    );
+    await loadPrivateData();
+
+    setTimeout(() => {
+      const chatPanel = document.getElementById("confirmed-job-chat-panel");
+      if (chatPanel) {
+        chatPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 120);
   }
 
   async function declineQuote(q) {
@@ -2714,11 +2820,28 @@ function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, setMe
     loadPrivateData();
   }
 
-  const qlist = quotesFor(jobPost.id);
-  const pendingQuotes = qlist.filter(q => q.status === "pending");
-  const acceptedQuotes = qlist.filter(q => q.status === "accepted");
-  const declinedQuotes = qlist.filter(q => q.status === "declined" || q.status === "rescinded" || q.status === "cancelled");
-  const activeQuotes = qlist.filter(q => q.status === "pending" || q.status === "accepted");
+const loadedQuotes = quotesFor(jobPost.id);
+
+const qlist =
+  recentlySubmittedQuote &&
+  !loadedQuotes.some((quote) => quote.id === recentlySubmittedQuote.id)
+    ? [...loadedQuotes, recentlySubmittedQuote]
+    : loadedQuotes;
+
+const pendingQuotes = qlist.filter((q) => q.status === "pending");
+const acceptedQuotes = qlist.filter((q) => q.status === "accepted");
+
+const declinedQuotes = qlist.filter(
+  (q) =>
+    q.status === "declined" ||
+    q.status === "rescinded" ||
+    q.status === "cancelled"
+);
+
+const activeQuotes = qlist.filter(
+  (q) => q.status === "pending" || q.status === "accepted"
+);
+
   const acceptedQuote = recentlyAcceptedQuote || acceptedQuotes[0] || null;
   const acceptedTradie = acceptedQuote ? tradespeople.find(t => t.id === acceptedQuote.tradesperson_id) : null;
   const acceptedTradieName = acceptedTradie?.business_name || acceptedTradie?.contact_name || "Tradesperson";
@@ -2729,6 +2852,25 @@ function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, setMe
     quoteFilter === "accepted" ? acceptedQuotes :
     quoteFilter === "declined" ? declinedQuotes :
     qlist;
+    const currentTradie = tradespeople.find(
+  (tradie) => tradie.user_id === profile.id
+);
+
+const currentTradieId =
+  currentTradie?.id || recentlySubmittedQuote?.tradesperson_id || null;
+
+const myQuotes = currentTradieId
+  ? qlist.filter((quote) => quote.tradesperson_id === currentTradieId)
+  : [];
+
+const myActiveQuote =
+  myQuotes.find(
+    (quote) =>
+      quote.status === "pending" ||
+      quote.status === "accepted"
+  ) || null;
+
+const isCustomer = profile.role === "customer";
 
   return <section>
     <div className="action-header">
@@ -2745,6 +2887,78 @@ function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, setMe
       <div><strong>{acceptedQuotes.length}</strong><span>Accepted</span></div>
       <div><strong>{declinedQuotes.length}</strong><span>Declined/closed</span></div>
     </div>
+    <div className="job-workspace-overview">
+  <div className="side-card job-workspace-details">
+    <span className="label">Job details</span>
+    <h2>{jobPost.job_title}</h2>
+
+    <div className="job-workspace-meta">
+      <span><strong>Trade:</strong> {jobPost.trade}</span>
+      <span><strong>County:</strong> {jobPost.county}</span>
+      <span>
+        <strong>Budget:</strong>{" "}
+        €{jobPost.budget_min || 0} – €{jobPost.budget_max || "Open"}
+      </span>
+      <span><strong>Status:</strong> {jobPost.status}</span>
+    </div>
+
+    <p>{jobPost.job_description}</p>
+  </div>
+
+  {!isCustomer && (
+    <div className="side-card job-workspace-quote-composer">
+      <span className="label">
+        {myActiveQuote ? "Your current quote" : "Send your quote"}
+      </span>
+
+      {myActiveQuote ? (
+        <>
+          <div className="workspace-current-quote">
+            <strong>€{myActiveQuote.price_eur}</strong>
+            <Status status={myActiveQuote.status} />
+          </div>
+
+          {myActiveQuote.note && <p>{myActiveQuote.note}</p>}
+
+          <SmartActionNotice
+            type="info"
+            title={
+              myActiveQuote.status === "accepted"
+                ? "Quote accepted"
+                : "Waiting for customer"
+            }
+            text={
+              myActiveQuote.status === "accepted"
+                ? "Use the conversation below to arrange the job."
+                : "Your quote has been sent. Quote revisions will be added in the next stage."
+            }
+          />
+        </>
+      ) : (
+        <form onSubmit={submitQuote} className="quote-form">
+          <Input
+            label="Your quote (€)"
+            name="price_eur"
+            type="number"
+            required
+          />
+
+          <Textarea
+            label="Quote message"
+            name="note"
+          />
+
+          <button
+            className="primary full"
+            disabled={quoteSubmitting}
+          >
+            {quoteSubmitting ? "Sending quote..." : "Send quote"}
+          </button>
+        </form>
+      )}
+    </div>
+  )}
+</div>
 
     {acceptedQuote && <div id="confirmed-job-chat-panel" className="confirmed-job-panel">
       <div>
@@ -2773,84 +2987,343 @@ function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, setMe
       </div>
     </div>}
 
-    <div className="chat-layout">
-      <div className="side-card quote-review-panel">
-        <div className="quote-panel-head">
-          <div>
-            <h3>Quotes</h3>
-            <p>Active quotes shown by default. Declined quotes are hidden unless selected.</p>
-          </div>
-          <label className="filter-select compact-filter">
-            <span>Show</span>
-            <select value={quoteFilter} onChange={(e) => setQuoteFilter(e.target.value)}>
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="accepted">Accepted</option>
-              <option value="declined">Declined/closed</option>
-              <option value="all">All quotes</option>
-            </select>
-          </label>
+    <div className="job-workspace-main">
+  {isCustomer && (
+    <div className="side-card workspace-quotes-panel">
+      <div className="quote-panel-head">
+        <div>
+          <span className="label">Quote management</span>
+          <h3>Quotes received</h3>
+          <p>
+            Compare active quotes and choose the tradesperson you would
+            like to hire.
+          </p>
         </div>
 
-        {filteredQuotes.length === 0 && <Empty text={qlist.length === 0 ? "No quotes yet." : "No quotes match this filter."}/>}
+        <label className="filter-select compact-filter">
+          <span>Show</span>
 
-        <div className="customer-quotes-list">
-          {filteredQuotes.map(q => {
-            const acting = quoteActionId === q.id;
-            const tradieName = tradespeople.find(t => t.id === q.tradesperson_id)?.business_name || "Tradesperson";
+          <select
+            value={quoteFilter}
+            onChange={(e) => setQuoteFilter(e.target.value)}
+          >
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="accepted">Accepted</option>
+            <option value="declined">Declined/closed</option>
+            <option value="all">All quotes</option>
+          </select>
+        </label>
+      </div>
 
-            return <div className={`quote-card customer-quote-card quote-card-${q.status}`} key={q.id}>
+      {filteredQuotes.length === 0 && (
+        <Empty
+          text={
+            qlist.length === 0
+              ? "No quotes have been received yet."
+              : "No quotes match this filter."
+          }
+        />
+      )}
+
+      <div className="customer-quotes-list">
+        {filteredQuotes.map((q) => {
+          const acting = quoteActionId === q.id;
+
+          const tradieName =
+            tradespeople.find(
+              (tradie) => tradie.id === q.tradesperson_id
+            )?.business_name || "Tradesperson";
+
+          return (
+            <div
+              className={`quote-card customer-quote-card quote-card-${q.status}`}
+              key={q.id}
+            >
               <div className="card-head">
                 <div>
                   <strong>{tradieName}</strong>
-                  <p className="price">€{q.price_eur}</p>
+
+                  <p className="price">
+                    {"\u20AC"}
+                    {q.price_eur}
+                  </p>
                 </div>
-                <Status status={q.status}/>
+
+                <Status status={q.status} />
               </div>
 
-              <p>{q.note}</p>
+              {q.note && <p>{q.note}</p>}
 
-              {profile.role === "customer" && q.status === "pending" && <div className="quote-actions">
-                <button className="primary small-btn" disabled={acting} onClick={() => acceptQuote(q)}>{acting ? "Updating..." : "Accept quote"}</button>
-                <button className="danger small-btn" disabled={acting} onClick={() => declineQuote(q)}>{acting ? "Updating..." : "Decline quote"}</button>
-              </div>}
+              {q.status === "pending" && (
+                <div className="quote-actions">
+                  <button
+                    className="primary small-btn"
+                    disabled={acting}
+                    onClick={() => acceptQuote(q)}
+                  >
+                    {acting ? "Updating..." : "Accept quote"}
+                  </button>
 
-              {q.status === "accepted" && <SmartActionNotice title="Quote accepted ✓" text="This quote is confirmed. Continue in chat to arrange the job." />}
-              {profile.role === "customer" && q.status === "accepted" && <div className="quote-actions"><button className="danger small-btn" disabled={acting} onClick={() => cancelAcceptedQuote(q)}>{acting ? "Cancelling..." : "Cancel job"}</button></div>}
-              {profile.role !== "customer" && q.status === "accepted" && <div className="quote-actions"><button className="danger small-btn" disabled={acting} onClick={() => cancelAcceptedQuote(q)}>{acting ? "Cancelling..." : "Cancel job"}</button></div>}
-              {q.status === "declined" && <SmartActionNotice type="danger" title="Quote declined" text="This quote is closed and hidden from the active view." />}
-              {q.status === "rescinded" && <SmartActionNotice type="danger" title="Quote rescinded" text="The tradesperson withdrew this quote." />}
-              {q.status === "cancelled" && <SmartActionNotice type="danger" title="Job cancelled" text="This accepted job was cancelled after discussion." />}
-              {q.status === "pending" && profile.role !== "customer" && <SmartActionNotice type="info" title="Waiting for customer" text="Your quote has been sent. The customer can accept or decline it." />}
-            </div>;
-          })}
-        </div>
-      </div>
+                  <button
+                    className="danger small-btn"
+                    disabled={acting}
+                    onClick={() => declineQuote(q)}
+                  >
+                    {acting ? "Updating..." : "Decline quote"}
+                  </button>
+                </div>
+              )}
 
-      <div className="side-card">
-        <h3>{acceptedQuote ? "Job chat" : "Chat"}</h3>
-        <div className="chat-guidance">
-          <strong>{acceptedQuote ? "Keep it simple" : "Quick chat"}</strong>
-          <span>{acceptedQuote ? "Agree date, time, address/access and payment expectations before work starts." : "Use chat to ask questions before accepting or completing the job."}</span>
-        </div>
-        <div className="quick-chat-prompts">
-          <button type="button" onClick={(e) => { const input = e.currentTarget.closest(".side-card").querySelector("input[name='message']"); if (input) input.value = "Hi, can we confirm the best time and date for this job?"; }}>Confirm time/date</button>
-          <button type="button" onClick={(e) => { const input = e.currentTarget.closest(".side-card").querySelector("input[name='message']"); if (input) input.value = "Can you confirm what is included in the price?"; }}>Confirm price</button>
-          <button type="button" onClick={(e) => { const input = e.currentTarget.closest(".side-card").querySelector("input[name='message']"); if (input) input.value = "Thanks, that works for me."; }}>Thanks</button>
-        </div>
-        <div className="messages">
-          {(messagesFor(jobPost.id) || []).length === 0 && <div className="chat-empty">No messages yet. Send the first message below.</div>}
-          {(messagesFor(jobPost.id) || []).map(m => <div className={`msg ${m.sender_id === profile.id ? "mine" : ""}`} key={m.id}>
-            <span>{m.message}</span>
-            {m.created_at && <small>{new Date(m.created_at).toLocaleString()}</small>}
-          </div>)}
-        </div>
-        <form onSubmit={sendMessage} className="message-form">
-          <input name="message" placeholder="Write a short message…" />
-          <button className="primary" disabled={messageSending}>{messageSending ? "..." : <Send size={16}/>}</button>
-        </form>
+              {q.status === "accepted" && (
+                <>
+                  <SmartActionNotice
+                    title="Quote accepted"
+                    text="This tradesperson is confirmed. Use the conversation to arrange the job."
+                  />
+
+                  <div className="quote-actions">
+                    <button
+                      className="danger small-btn"
+                      disabled={acting}
+                      onClick={() => cancelAcceptedQuote(q)}
+                    >
+                      {acting ? "Cancelling..." : "Cancel job"}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {q.status === "declined" && (
+                <SmartActionNotice
+                  type="danger"
+                  title="Quote declined"
+                  text="This quote is closed and hidden from the active view."
+                />
+              )}
+
+              {q.status === "rescinded" && (
+                <SmartActionNotice
+                  type="danger"
+                  title="Quote withdrawn"
+                  text="The tradesperson withdrew this quote."
+                />
+              )}
+
+              {q.status === "cancelled" && (
+                <SmartActionNotice
+                  type="danger"
+                  title="Job cancelled"
+                  text="This accepted job was cancelled after discussion."
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
+  )}
+
+  <div className="workspace-conversation-layout">
+    <div className="side-card workspace-conversation">
+      <div className="workspace-section-head">
+        <div>
+          <span className="label">Conversation</span>
+          <h3>{acceptedQuote ? "Job chat" : "Questions and messages"}</h3>
+        </div>
+
+        <Status status={acceptedQuote ? "quote_accepted" : jobPost.status} />
+      </div>
+
+      <div className="chat-guidance">
+        <strong>
+          {acceptedQuote ? "Arrange the job details" : "Discuss the job"}
+        </strong>
+
+        <span>
+          {acceptedQuote
+            ? "Confirm the date, time, access arrangements and payment expectations before work starts."
+            : "Ask questions and clarify the scope before a quote is accepted."}
+        </span>
+      </div>
+
+      <div className="quick-chat-prompts">
+        <button
+          type="button"
+          onClick={(e) => {
+            const input = e.currentTarget
+              .closest(".workspace-conversation")
+              ?.querySelector("input[name='message']");
+
+            if (input) {
+              input.value =
+                "Hi, can we confirm the best time and date for this job?";
+              input.focus();
+            }
+          }}
+        >
+          Confirm time/date
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            const input = e.currentTarget
+              .closest(".workspace-conversation")
+              ?.querySelector("input[name='message']");
+
+            if (input) {
+              input.value = "Can you confirm what is included in the price?";
+              input.focus();
+            }
+          }}
+        >
+          Confirm price
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            const input = e.currentTarget
+              .closest(".workspace-conversation")
+              ?.querySelector("input[name='message']");
+
+            if (input) {
+              input.value = "Thanks, that works for me.";
+              input.focus();
+            }
+          }}
+        >
+          Thanks
+        </button>
+      </div>
+
+      <div className="messages workspace-messages">
+        {(messagesFor(jobPost.id) || []).length === 0 && (
+          <div className="chat-empty">
+            <MessageCircle size={28} />
+
+            <strong>No messages yet</strong>
+
+            <span>
+              Send the first message to begin discussing this job.
+            </span>
+          </div>
+        )}
+
+        {(messagesFor(jobPost.id) || []).map((m) => {
+          const mine = m.sender_id === profile.id;
+
+          return (
+            <div
+              className={`msg ${mine ? "mine" : ""}`}
+              key={m.id}
+            >
+              <span>{m.message}</span>
+
+              {m.created_at && (
+                <small>
+                  {new Date(m.created_at).toLocaleString()}
+                </small>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <form onSubmit={sendMessage} className="message-form workspace-message-form">
+        <input
+          name="message"
+          placeholder="Write a message..."
+          autoComplete="off"
+        />
+
+        <button
+          className="primary"
+          disabled={messageSending}
+          aria-label="Send message"
+        >
+          {messageSending ? "..." : <Send size={18} />}
+        </button>
+      </form>
+    </div>
+
+    <aside className="side-card workspace-timeline">
+      <div className="workspace-section-head">
+        <div>
+          <span className="label">Progress</span>
+          <h3>Job timeline</h3>
+        </div>
+      </div>
+
+      <div className="workspace-timeline-list">
+        <div className="workspace-timeline-item complete">
+          <span className="workspace-timeline-marker" />
+
+          <div>
+            <strong>Job posted</strong>
+            <span>
+              {jobPost.created_at
+                ? new Date(jobPost.created_at).toLocaleString()
+                : "Job is live"}
+            </span>
+          </div>
+        </div>
+
+        <div
+          className={`workspace-timeline-item ${
+            qlist.length > 0 ? "complete" : "current"
+          }`}
+        >
+          <span className="workspace-timeline-marker" />
+
+          <div>
+            <strong>Quotes received</strong>
+            <span>
+              {qlist.length > 0
+                ? `${qlist.length} quote${qlist.length === 1 ? "" : "s"} received`
+                : "Waiting for the first quote"}
+            </span>
+          </div>
+        </div>
+
+        <div
+          className={`workspace-timeline-item ${
+            acceptedQuote ? "complete" : qlist.length > 0 ? "current" : ""
+          }`}
+        >
+          <span className="workspace-timeline-marker" />
+
+          <div>
+            <strong>Quote accepted</strong>
+            <span>
+              {acceptedQuote
+                ? "A tradesperson has been selected"
+                : "No quote has been accepted yet"}
+            </span>
+          </div>
+        </div>
+
+        <div
+          className={`workspace-timeline-item ${
+            acceptedQuote ? "current" : ""
+          }`}
+        >
+          <span className="workspace-timeline-marker" />
+
+          <div>
+            <strong>Job arranged</strong>
+            <span>
+              {acceptedQuote
+                ? "Confirm the final details in the conversation"
+                : "Available after accepting a quote"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
   </section>;
 }
 
