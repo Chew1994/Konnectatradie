@@ -1,4 +1,5 @@
 import { AlertTriangle, ClipboardCheck, LoaderCircle, Star } from "lucide-react";
+import EmptyState from "../common/EmptyState";
 import { supabase } from "../../lib/supabase";
 
 function ActionHeader({ title, subtitle, primary, secondary, onPrimary, onSecondary }) {
@@ -209,17 +210,6 @@ function LoadingState({ title = "Loading…", text = "Please wait while we get e
         <strong>{title}</strong>
         <p>{text}</p>
       </div>
-    </div>
-  );
-}
-
-function EmptyState({ title, text, actionText, onAction }) {
-  return (
-    <div className="empty-state premium-empty-state">
-      <div className="empty-state-icon"><AlertTriangle size={24}/></div>
-      <h3>{title}</h3>
-      <p>{text}</p>
-      {actionText && <button className="primary small-btn" onClick={onAction}>{actionText}</button>}
     </div>
   );
 }

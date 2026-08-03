@@ -952,11 +952,28 @@ function CustomerDashboard({ profile, setTab, posts, jobs, quotesFor, setSelecte
       <div className="main-feed">
         <BookingNotificationPanel jobs={jobs} role="customer"/>
         <ActionSection icon={<Zap/>} title="Action required" subtitle="Things you should look at first.">
-          {urgentPosts.length === 0 && <Empty text="No urgent actions right now."/>}
+          {urgentPosts.length === 0 && <EmptyState
+            title="You're all caught up"
+            text="There are no urgent quote decisions or booking updates waiting for you."
+          />}
           {urgentPosts.map(p => <JobPostCard key={p.id} job={p} priority quotesCount={quotesFor(p.id).length} onOpen={() => {setSelectedJobPost(p); setTab("job-chat");}} />)}
         </ActionSection>
         <ActionSection icon={<BriefcaseBusiness/>} title="Posted jobs" subtitle="Track quotes and conversations." filter={<StatusFilter value={postFilter} onChange={setPostFilter} options={[["all","All posted jobs"],["open","Open"],["quote_accepted","Quote accepted"],["declined","Declined"]]}/>}>
-          {filteredPosts.length === 0 && <Empty text="No jobs match this filter."/>}
+          {filteredPosts.length === 0 && (
+            posts.length === 0
+              ? <EmptyState
+                  title="No jobs posted yet"
+                  text="Post your first job to start receiving quotes from local tradespeople."
+                  actionText="Post a Job"
+                  onAction={() => setTab("post-job")}
+                />
+              : <EmptyState
+                  title="No jobs match this filter"
+                  text="Try another status or clear the dashboard filter to see all posted jobs."
+                  actionText="Show all jobs"
+                  onAction={() => { setPostFilter("all"); clearDashboardFocus(); }}
+                />
+          )}
           {filteredPosts.map(p => <JobPostCard key={p.id} job={p} quotesCount={quotesFor(p.id).length} onOpen={() => {setSelectedJobPost(p); setTab("job-chat");}} />)}
         </ActionSection>
         <DirectBookings jobs={filteredJobs} filter={bookingFilter} setFilter={setBookingFilter}/>
