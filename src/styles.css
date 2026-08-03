@@ -1587,7 +1587,8 @@ body:has(.success-popup-overlay) .message{
 }
 body:has(.success-popup-overlay) .message,
 body:has(.success-popup-overlay) .alert,
-body:has(.success-popup-overlay) .notice{
+body:has(.success-popup-overlay) .notice,
+body:has(.success-popup-overlay) .toast{
   display:none!important;
 }
 
