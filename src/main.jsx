@@ -1,17 +1,34 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { createClient } from "@supabase/supabase-js";
 import {
   Hammer, Search, ShieldCheck, Star, LogOut, ArrowRight, BadgeCheck, Wrench,
   Home as HomeIcon, ClipboardCheck, CheckCircle, XCircle, Clock, MessageCircle,
   Euro, Send, BriefcaseBusiness, PlusCircle, Inbox, AlertTriangle, Zap, Menu, X, Info, Bell
 } from "lucide-react";
+import { Input, Select, Textarea } from "./components/common/FormControls";
+import { supabase } from "./lib/supabase";
+import {
+  ActionHeader, ActionSection, BookingNotificationPanel, DirectBookings, DirectJobCard,
+  Empty, EmptyState, JobPostCard, LoadingState, QuoteCard, Stats, Status, StatusFilter,
+  filterByStatus, lifecycleStatus
+} from "./components/workspace/JobWorkspaceComponents";
+import { COUNTIES, STOCK_IMAGES, TRADES } from "./constants";
+import { DashboardErrorBoundary, IdentityActionHeader, MessengerPopup, NotificationStrip } from "./components/dashboard/DashboardShellComponents";
 import "./styles.css";
 
-const supabase = createClient(import.meta.env.VITE_SUPABASE_URL || "", import.meta.env.VITE_SUPABASE_ANON_KEY || "");
+const MapView = lazy(() => import("./components/workspace/MapView"));
+
 const BOOKING_FEE = 5;
+
+function readRoute() {
+  const raw = window.location.hash.replace(/^#/, "");
+  const [tab = "home", jobId = ""] = raw.split("/");
+  return { tab: tab || "home", jobId: jobId || "" };
+}
+
+function routeHash(tab, jobId = "") {
+  return tab === "job-chat" && jobId ? `#job-chat/${jobId}` : `#${tab}`;
+}
 
 async function sendPlatformNotification(payload) {
   try {
@@ -32,78 +49,15 @@ async function sendPlatformNotification(payload) {
 }
 
 
-const trades = ["Painter","Plasterer","Plumber","Electrician","Gardener","Builder","Carpenter","Tiler","Roofer","Handyman","Cleaner","Landscaper","Heating Engineer","Other"];
-const counties = ["Antrim","Armagh","Carlow","Cavan","Clare","Cork","Derry","Donegal","Down","Dublin","Fermanagh","Galway","Kerry","Kildare","Kilkenny","Laois","Leitrim","Limerick","Longford","Louth","Mayo","Meath","Monaghan","Offaly","Roscommon","Sligo","Tipperary","Tyrone","Waterford","Westmeath","Wexford","Wicklow"];
-const countyCoords = {
-  "Antrim":[54.72,-6.22],"Armagh":[54.35,-6.65],"Carlow":[52.84,-6.93],"Cavan":[53.99,-7.36],
-  "Clare":[52.86,-9.00],"Cork":[51.90,-8.47],"Derry":[54.99,-7.32],"Donegal":[54.65,-8.11],
-  "Down":[54.33,-5.72],"Dublin":[53.35,-6.26],"Fermanagh":[54.34,-7.63],"Galway":[53.27,-9.05],
-  "Kerry":[52.15,-9.56],"Kildare":[53.16,-6.91],"Kilkenny":[52.65,-7.25],"Laois":[52.99,-7.33],
-  "Leitrim":[54.12,-8.00],"Limerick":[52.66,-8.63],"Longford":[53.73,-7.79],"Louth":[53.95,-6.54],
-  "Mayo":[53.85,-9.30],"Meath":[53.65,-6.68],"Monaghan":[54.25,-6.97],"Offaly":[53.27,-7.49],
-  "Roscommon":[53.63,-8.19],"Sligo":[54.27,-8.47],"Tipperary":[52.47,-8.16],"Tyrone":[54.60,-7.31],
-  "Waterford":[52.26,-7.11],"Westmeath":[53.53,-7.34],"Wexford":[52.34,-6.46],"Wicklow":[52.98,-6.04]
-};
-const stockImages = [
-  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?auto=format&fit=crop&w=900&q=80"
-];
 
-
-class DashboardErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, message: "" };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, message: error?.message || "Dashboard could not load." };
-  }
-
-  componentDidCatch(error, info) {
-    console.error("Dashboard render error:", error, info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <SafeTradespersonDashboardFallback setTab={this.props.setTab} message={this.state.message} />;
-    }
-
-    return this.props.children;
-  }
-}
-
-function SafeTradespersonDashboardFallback({ setTab, message }) {
-  return <section className="safe-dashboard-fallback">
-    <div className="action-header">
-      <div>
-        <span className="label">Dashboard recovery</span>
-        <h1>Tradesperson dashboard</h1>
-        <p>Your account is logged in, but part of the dashboard failed to load. Use the quick actions below while we protect the page from going blank.</p>
-      </div>
-    </div>
-
-    <div className="safe-recovery-card">
-      <h2>Dashboard safe mode</h2>
-      <p>{message || "A dashboard section failed to render."}</p>
-      <div className="safe-recovery-actions">
-        <button className="primary" onClick={() => setTab("jobs-board")}>Available Jobs</button>
-        <button className="secondary" onClick={() => setTab("quotes-sent")}>Quotes Sent</button>
-        <button className="secondary" onClick={() => setTab("map")}>Job Map</button>
-      </div>
-    </div>
-  </section>;
-}
 
 
 function App() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [tab, setTab] = useState(() => {
-    const saved = window.location.hash?.replace("#", "") || localStorage.getItem("kta-current-tab");
-    return saved || "home";
-  });
+  const initialRoute = useMemo(() => readRoute(), []);
+  const [tab, setTab] = useState(() => initialRoute.tab || localStorage.getItem("kta-current-tab") || "home");
+  const [selectedJobId, setSelectedJobId] = useState(() => initialRoute.jobId);
   const [message, setMessage] = useState("");
   const [accountConfirmOpen, setAccountConfirmOpen] = useState(false);
   const [tradespeople, setTradespeople] = useState([]);
@@ -114,6 +68,7 @@ function App() {
   const [quotes, setQuotes] = useState([]);
   const [messages, setMessages] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [privateDataLoaded, setPrivateDataLoaded] = useState(false);
   const [selectedTradie, setSelectedTradie] = useState(null);
   const [selectedJobPost, setSelectedJobPost] = useState(null);
   const [filters, setFilters] = useState({ trade: "", county: "" });
@@ -130,8 +85,31 @@ function App() {
   useEffect(() => { if (profile) loadPrivateData(); }, [profile]);
   useEffect(() => {
     localStorage.setItem("kta-current-tab", tab);
-    if (window.location.hash?.replace("#", "") !== tab) window.history.replaceState(null, "", `#${tab}`);
-  }, [tab]);
+    const nextHash = routeHash(tab, selectedJobPost?.id || selectedJobId);
+    if (window.location.hash !== nextHash) window.history.replaceState(null, "", nextHash);
+  }, [tab, selectedJobPost?.id, selectedJobId]);
+
+  useEffect(() => {
+    if (selectedJobPost?.id) setSelectedJobId(String(selectedJobPost.id));
+  }, [selectedJobPost?.id]);
+
+  useEffect(() => {
+    if (tab !== "job-chat" || !selectedJobId || selectedJobPost?.id) return;
+    const restoredJob = jobPosts.find((job) => String(job.id) === String(selectedJobId));
+    if (restoredJob) setSelectedJobPost(restoredJob);
+  }, [tab, selectedJobId, selectedJobPost?.id, jobPosts]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const route = readRoute();
+      setTab(route.tab);
+      setSelectedJobId(route.jobId);
+      if (route.tab !== "job-chat") setSelectedJobPost(null);
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -217,14 +195,38 @@ function App() {
     setQuotes(jq.data || []);
     setMessages(jm.data || []);
     setDocuments(docs.data || []);
+    setPrivateDataLoaded(true);
   }
 
   async function signOut() { await supabase.auth.signOut(); setTab("home"); setMessage("Signed out."); }
 
+  function openJobWorkspace(jobPost) {
+    if (!jobPost?.id) {
+      setMessage("This job could not be opened because its ID is missing.");
+      return;
+    }
+
+    const jobId = String(jobPost.id);
+    setSelectedJobPost(jobPost);
+    setSelectedJobId(jobId);
+    setTab("job-chat");
+    localStorage.setItem("kta-current-tab", "job-chat");
+    window.location.hash = routeHash("job-chat", jobId);
+    setMobileMenuOpen(false);
+  }
+
   function goTab(nextTab) {
+    if (nextTab !== "job-chat") {
+      setSelectedJobPost(null);
+      setSelectedJobId("");
+    }
     setTab(nextTab);
     localStorage.setItem("kta-current-tab", nextTab);
-    window.location.hash = nextTab;
+    const currentRouteJobId = readRoute().jobId;
+    window.location.hash = routeHash(
+      nextTab,
+      selectedJobPost?.id || selectedJobId || currentRouteJobId
+    );
     setMobileMenuOpen(false);
   }
 
@@ -249,11 +251,18 @@ function App() {
     <header className={`nav ${mobileMenuOpen ? "nav-open" : ""}`}>
       <button className="logo" onClick={() => goTab("home")}><span className="logo-mark"><Hammer size={20}/></span> KonnectATradie</button>
 
-      <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Open menu">
+      <button
+        className="mobile-menu-btn"
+        type="button"
+        onClick={() => setMobileMenuOpen((open) => !open)}
+        aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+        aria-expanded={mobileMenuOpen}
+        aria-controls="primary-navigation"
+      >
         {mobileMenuOpen ? <X size={24}/> : <Menu size={24}/>}
       </button>
 
-      <div className="nav-links">
+      <div className="nav-links" id="primary-navigation">
         <button onClick={() => goTab("search")}>Find a Tradie</button>
         {session && <button onClick={() => goTab("dashboard")}>Dashboard</button>}
         {session && profile?.role === "customer" && <button onClick={() => goTab("map")}>Map</button>}
@@ -267,13 +276,13 @@ function App() {
     </header>
     <SuccessMessagePopup message={message} clearMessage={() => setMessage("")} />
     <AccountConfirmedModal open={accountConfirmOpen} />
-    <MessengerPopup profile={profile} messages={messages} jobPosts={jobPosts} setSelectedJobPost={setSelectedJobPost} setTab={goTab} />
+    <MessengerPopup profile={profile} messages={messages} jobPosts={jobPosts} setSelectedJobPost={openJobWorkspace} setTab={goTab} />
 
     {tab === "home" && <Home setTab={setTab} goPostJob={goPostJob} />}
     {message && <div className="toast">{message}</div>}
 
     <main className="container">
-      {session && <NotificationStrip profile={profile} myPosts={jobPosts.filter(j => j.customer_id === profile?.id)} myQuotes={["tradesperson","tradie"].includes(profile?.role) ? quotes.filter(q => q.tradesperson_id === myTradie?.id) : quotes} jobs={jobs} messages={messages} jobPosts={jobPosts} setSelectedJobPost={setSelectedJobPost} setTab={goTab} />}
+      {session && <NotificationStrip profile={profile} myPosts={jobPosts.filter(j => j.customer_id === profile?.id)} myQuotes={["tradesperson","tradie"].includes(profile?.role) ? quotes.filter(q => q.tradesperson_id === myTradie?.id) : quotes} jobs={jobs} messages={messages} jobPosts={jobPosts} setSelectedJobPost={openJobWorkspace} setTab={goTab} />}
       {tab === "auth" && <Auth setTab={setTab} setMessage={setMessage} setAccountConfirmOpen={setAccountConfirmOpen} />}
       {tab === "about" && <AboutUs setTab={setTab} profile={profile} />}
       {tab === "privacy" && <LegalPage type="privacy" setTab={setTab} />}
@@ -281,14 +290,16 @@ function App() {
       {tab === "legal" && <LegalPage type="legal" setTab={setTab} />}
       {tab === "search" && <SearchPage visibleTradies={visibleTradies} filters={filters} setFilters={setFilters} photosFor={photosFor} avgRating={avgRating} reviewsFor={reviewsFor} setSelectedTradie={setSelectedTradie} setTab={setTab} />}
       {tab === "tradie-profile" && selectedTradie && <TradieProfile tradie={selectedTradie} photos={photosFor(selectedTradie.id)} reviews={reviewsFor(selectedTradie.id)} avgRating={avgRating(selectedTradie.id)} setTab={setTab} setSelectedTradie={setSelectedTradie} />}
-      {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={setTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={setSelectedJobPost} setTab={setTab} /></DashboardErrorBoundary> : <Auth setTab={setTab} setMessage={setMessage}/>)}
+      {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
       {tab === "book" && (session ? <Booking selectedTradie={selectedTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage}/>)}
       {tab === "post-job" && (session ? <PostJob profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage}/>)}
-      {tab === "available-jobs" && ["tradesperson","tradie"].includes(profile?.role) && <AvailableJobs jobPosts={openJobPosts} myTradie={myTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} setSelectedJobPost={setSelectedJobPost} setTab={setTab} />}
-      {tab === "quotes-sent" && ["tradesperson","tradie"].includes(profile?.role) && <QuotesSentPage myTradie={myTradie} quotes={quotes} jobPosts={jobPosts} setMessage={setMessage} loadPrivateData={loadPrivateData} setSelectedJobPost={setSelectedJobPost} setTab={setTab} />}
-      {tab === "jobs-board" && session && <JobsBoard profile={profile} tradespeople={visibleTradies} jobPosts={openJobPosts} myTradie={myTradie} setSelectedTradie={setSelectedTradie} setSelectedJobPost={setSelectedJobPost} setTab={setTab} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} />}
-      {tab === "map" && session && <MapView profile={profile} tradespeople={visibleTradies} jobPosts={openJobPosts} setSelectedTradie={setSelectedTradie} setSelectedJobPost={setSelectedJobPost} setTab={setTab} />}
+      {tab === "available-jobs" && ["tradesperson","tradie"].includes(profile?.role) && <AvailableJobs jobPosts={openJobPosts} myTradie={myTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}
+      {tab === "quotes-sent" && ["tradesperson","tradie"].includes(profile?.role) && <QuotesSentPage myTradie={myTradie} quotes={quotes} jobPosts={jobPosts} setMessage={setMessage} loadPrivateData={loadPrivateData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}
+      {tab === "jobs-board" && session && <JobsBoard profile={profile} tradespeople={visibleTradies} jobPosts={openJobPosts} myTradie={myTradie} setSelectedTradie={setSelectedTradie} setSelectedJobPost={openJobWorkspace} setTab={setTab} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} />}
+      {tab === "map" && session && <Suspense fallback={<LoadingState title="Loading map…" text="We are preparing the interactive map and nearby results."/>}><MapView profile={profile} tradespeople={visibleTradies} jobPosts={openJobPosts} setSelectedTradie={setSelectedTradie} setSelectedJobPost={openJobWorkspace} setTab={setTab} /></Suspense>}
       {tab === "job-chat" && selectedJobPost && <JobChat jobPost={selectedJobPost} profile={profile} messagesFor={messagesFor} quotesFor={quotesFor} tradespeople={tradespeople} setMessage={setMessage} loadPrivateData={loadPrivateData} />}
+      {tab === "job-chat" && !selectedJobPost && selectedJobId && !privateDataLoaded && <LoadingState title="Loading job workspace…" text="We are restoring the job, quotes and conversation from this link."/>}
+      {tab === "job-chat" && !selectedJobPost && (privateDataLoaded || !selectedJobId) && <section className="card empty-state"><h2>Job not found</h2><p>This job could not be loaded. Return to your dashboard and open it again.</p><button className="primary" onClick={() => goTab("dashboard")}>Back to dashboard</button></section>}
       {tab === "admin" && profile?.role === "admin" && <Admin tradespeople={tradespeople} documents={documents} setMessage={setMessage} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData} />}
     </main>
 
@@ -396,7 +407,7 @@ function Home({ setTab, goPostJob }) {
 
       <div className="hero-v3-panel">
         <div className="hero-v3-image-card">
-          <img src={stockImages[0]} alt="Trusted trades work" />
+          <img src={STOCK_IMAGES[0]} alt="Trusted TRADES work" />
           <div className="floating-trust-card">
             <ShieldCheck size={22}/>
             <div>
@@ -647,7 +658,7 @@ function Auth({ setTab, setMessage, setAccountConfirmOpen }) {
     <div className="premium-auth-hero">
       <span className="label">KonnectATradie</span>
       <h1>Find the right tradesperson. Fast.</h1>
-      <p>Built to connect customers with available, trusted trades across Ireland — with quotes, reviews and clear job updates in one place.</p>
+      <p>Built to connect customers with available, trusted TRADES across Ireland — with quotes, reviews and clear job updates in one place.</p>
 
       <div className="auth-benefits">
         <div><CheckCircle size={20}/><span>Verified listings and real reviews</span></div>
@@ -713,7 +724,7 @@ function Auth({ setTab, setMessage, setAccountConfirmOpen }) {
             <button type="button" className={`role-choice ${selectedRole === "customer" ? "active" : ""}`} onClick={() => setSelectedRole("customer")}>
               <HomeIcon size={24}/>
               <strong>I need a tradesperson</strong>
-              <span>Post jobs, review quotes and book trusted trades.</span>
+              <span>Post jobs, review quotes and book trusted TRADES.</span>
             </button>
 
             <button type="button" className={`role-choice ${selectedRole === "tradesperson" ? "active" : ""}`} onClick={() => setSelectedRole("tradesperson")}>
@@ -731,7 +742,7 @@ function Auth({ setTab, setMessage, setAccountConfirmOpen }) {
             <div className="signup-step-pill">{selectedRole === "tradesperson" ? "Tradesperson account" : "Customer account"}</div>
             <Input label="Full name" name="full_name" required/>
             <Input label="Phone" name="phone"/>
-            <Select label="County" name="county" options={counties}/>
+            <Select label="County" name="county" options={COUNTIES}/>
             <Input label="Email" name="email" type="email" required/>
             <Input label="Password" name="password" type="password" minLength="6" required/>
             <div className="auth-form-actions">
@@ -749,120 +760,25 @@ function Auth({ setTab, setMessage, setAccountConfirmOpen }) {
 }
 
 
-function initialsFromName(name = "") {
-  const clean = String(name || "").trim();
-  if (!clean) return "KT";
-  const parts = clean.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0] || ""}${parts[1][0] || ""}`.toUpperCase();
-}
-
-function IdentityActionHeader({ label, title, subtitle, primary, secondary, onPrimary, onSecondary, badge, avatarText }) {
-  return (
-    <div className="action-header identity-action-header">
-      <div className="identity-title-row">
-        <div className="identity-avatar">{initialsFromName(avatarText || title)}</div>
-        <div>
-          <span className="label">{label}</span>
-          <div className="identity-heading-line">
-            <h1>{title}</h1>
-            {badge && <span className={`identity-badge ${badge.variant || ""}`}>{badge.text}</span>}
-          </div>
-          <p>{subtitle}</p>
-        </div>
-      </div>
-      <div className="hero-actions compact-actions">
-        {primary && <button className="primary" onClick={onPrimary}>{primary}</button>}
-        {secondary && <button className="secondary" onClick={onSecondary}>{secondary}</button>}
-      </div>
-    </div>
-  );
-}
 
 
 
-function NotificationStrip({ profile, myPosts = [], myQuotes = [], jobs = [], messages = [], setTab, setSelectedJobPost, jobPosts = [] }) {
-  if (!profile) return null;
 
-  const customerQuotePosts = profile.role === "customer"
-    ? myPosts.filter(p => myQuotes.some(q => q.job_post_id === p.id && q.status === "pending"))
-    : [];
 
-  const tradieAcceptedQuotes = profile.role === "tradesperson"
-    ? myQuotes.filter(q => q.status === "accepted")
-    : [];
 
-  const tradieRequests = profile.role === "tradesperson"
-    ? jobs.filter(j => lifecycleStatus(j) === "requested")
-    : [];
-
-  const recentCutoff = Date.now() - (24 * 60 * 60 * 1000);
-  const recentMessages = messages
-    .filter(m => m.sender_id !== profile.id && (!m.created_at || new Date(m.created_at).getTime() >= recentCutoff))
-    .slice(-3)
-    .reverse();
-
-  const total = customerQuotePosts.length + tradieAcceptedQuotes.length + tradieRequests.length + recentMessages.length;
-  if (total === 0) return null;
-
-  function openFirstMessage() {
-    const msg = recentMessages[0];
-    if (!msg) return;
-    const post = jobPosts.find(j => j.id === msg.job_post_id);
-    if (post) {
-      setSelectedJobPost(post);
-      setTab("job-chat");
-    }
-  }
-
-  return <div className="notification-strip">
-    <div className="notification-strip-title">
-      <Bell size={18}/>
-      <strong>{total} notification{total === 1 ? "" : "s"}</strong>
-    </div>
-
-    <div className="notification-pills">
-      {profile.role === "customer" && customerQuotePosts.length > 0 && <button onClick={() => setTab("dashboard")}>💬 {customerQuotePosts.length} quote{customerQuotePosts.length === 1 ? "" : "s"} received</button>}
-      {profile.role === "tradesperson" && tradieAcceptedQuotes.length > 0 && <button onClick={() => setTab("quotes-sent")}>✅ {tradieAcceptedQuotes.length} accepted quote{tradieAcceptedQuotes.length === 1 ? "" : "s"}</button>}
-      {profile.role === "tradesperson" && tradieRequests.length > 0 && <button onClick={() => setTab("dashboard")}>📩 {tradieRequests.length} booking request{tradieRequests.length === 1 ? "" : "s"}</button>}
-      {recentMessages.length > 0 && <button onClick={openFirstMessage}>🔔 {recentMessages.length} new message alert{recentMessages.length === 1 ? "" : "s"}</button>}
-    </div>
-  </div>;
-}
-
-function MessengerPopup({ profile, messages = [], jobPosts = [], setSelectedJobPost, setTab }) {
-  const storageKey = `kta-seen-message-${profile?.id || "guest"}`;
-  const [dismissedId, setDismissedId] = useState(() => localStorage.getItem(storageKey));
-  if (!profile) return null;
-
-  const latest = [...messages].filter(m => m.sender_id !== profile.id).sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0];
-  if (!latest || String(latest.id) === String(dismissedId)) return null;
-
-  const post = jobPosts.find(j => j.id === latest.job_post_id);
-
-  return <div className="messenger-popup">
-    <button className="messenger-close" onClick={() => { localStorage.setItem(storageKey, latest.id); setDismissedId(latest.id); }}>×</button>
-    <div className="messenger-dot"><MessageCircle size={18}/></div>
-    <div>
-      <strong>New message</strong>
-      <p>{latest.message || "You have a new chat message."}</p>
-      <button onClick={() => { if (post) setSelectedJobPost(post); setTab("job-chat"); }}>Open chat</button>
-    </div>
-  </div>;
-}
 
 function JobsBoard({ profile, tradespeople, jobPosts, myTradie, setSelectedTradie, setSelectedJobPost, setTab, setMessage, loadPrivateData, loadPublicData }) {
   return <section>
     <div className="action-header">
       <div>
         <span className="label">Jobs board</span>
-        <h1>{["tradesperson","tradie"].includes(profile?.role) ? "Job Map & Available Jobs" : "Find work and trades nearby"}</h1>
+        <h1>{["tradesperson","tradie"].includes(profile?.role) ? "Job Map & Available Jobs" : "Find work and TRADES nearby"}</h1>
         <p>{["tradesperson","tradie"].includes(profile?.role) ? "Use the map and list together so you can find jobs faster." : "Browse the map and find trusted tradespeople."}</p>
       </div>
     </div>
 
     <div className="jobs-board-combo">
-      <MapView profile={profile} tradespeople={tradespeople} jobPosts={jobPosts} setSelectedTradie={setSelectedTradie} setSelectedJobPost={setSelectedJobPost} setTab={setTab} />
+      <Suspense fallback={<LoadingState title="Loading job map…" text="We are preparing the map and available jobs."/>}><MapView profile={profile} tradespeople={tradespeople} jobPosts={jobPosts} setSelectedTradie={setSelectedTradie} setSelectedJobPost={setSelectedJobPost} setTab={setTab} /></Suspense>
       {["tradesperson","tradie"].includes(profile?.role) && <AvailableJobs jobPosts={jobPosts} myTradie={myTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} setSelectedJobPost={setSelectedJobPost} setTab={setTab} />}
     </div>
   </section>;
@@ -933,7 +849,7 @@ function MapPinFallback() {
 }
 
 function Dashboard({ profile, session, setMessage, loadProfile, loadPublicData, jobs, jobPosts, quotes, loadPrivateData, documents, myTradie, quotesFor, setSelectedJobPost, setTab }) {
-  if (!profile) return <p className="loading-note">Setting up your dashboard…</p>;
+  if (!profile) return <LoadingState title="Setting up your dashboard…" text="We are loading your account, jobs and recent activity."/>;
 
   const safeJobs = Array.isArray(jobs) ? jobs : [];
   const safeJobPosts = Array.isArray(jobPosts) ? jobPosts : [];
@@ -1007,43 +923,6 @@ function CustomerDashboard({ profile, setTab, posts, jobs, quotesFor, setSelecte
   function clearDashboardFocus() {
     setDashboardFocus("");
     setMessage("Showing full dashboard.");
-  }
-
-  async function rescindDashboardQuote(quote) {
-    if (!quote?.id) {
-      setMessage("Could not find that quote.");
-      return;
-    }
-
-    const isAccepted = quote.status === "accepted";
-    const confirmed = window.confirm(
-      isAccepted
-        ? "Cancel this accepted job? Use this if the customer is not proceeding after discussion."
-        : "Rescind this quote? The customer will no longer be able to accept it."
-    );
-    if (!confirmed) return;
-
-    setCompletionId(quote.id);
-
-    const nextStatus = isAccepted ? "cancelled" : "rescinded";
-    const { error: quoteError } = await supabase.from("job_quotes").update({ status: nextStatus }).eq("id", quote.id);
-
-    let postError = null;
-    if (isAccepted && quote.job_post_id && !quoteError) {
-      const result = await supabase.from("job_posts").update({ status: "open", accepted_quote_id: null, accepted_tradesperson_id: null }).eq("id", quote.job_post_id);
-      postError = result.error;
-    }
-
-    setCompletionId(null);
-
-    if (quoteError || postError) {
-      setMessage((quoteError || postError).message);
-      return;
-    }
-
-    setMessage(isAccepted ? "Job cancelled. The customer can now choose another quote." : "Quote rescinded.");
-    loadPrivateData?.();
-    loadPublicData?.();
   }
 
   return <section>
@@ -1149,6 +1028,49 @@ function TradieDashboard({ profile, userId, setTab, jobs, myQuotes, jobPosts, my
   function clearDashboardFocus() {
     setDashboardFocus("");
     setMessage("Showing full dashboard.");
+  }
+
+  async function rescindDashboardQuote(quote) {
+    if (!quote?.id) {
+      setMessage("Could not find that quote.");
+      return;
+    }
+
+    const isAccepted = quote.status === "accepted";
+    const confirmed = window.confirm(
+      isAccepted
+        ? "Cancel this accepted job? Use this if the customer is not proceeding after discussion."
+        : "Rescind this quote? The customer will no longer be able to accept it."
+    );
+    if (!confirmed) return;
+
+    setCompletionId(quote.id);
+
+    const nextStatus = isAccepted ? "cancelled" : "rescinded";
+    const { error: quoteError } = await supabase
+      .from("job_quotes")
+      .update({ status: nextStatus })
+      .eq("id", quote.id);
+
+    let postError = null;
+    if (isAccepted && quote.job_post_id && !quoteError) {
+      const result = await supabase
+        .from("job_posts")
+        .update({ status: "open", accepted_quote_id: null, accepted_tradesperson_id: null })
+        .eq("id", quote.job_post_id);
+      postError = result.error;
+    }
+
+    setCompletionId(null);
+
+    if (quoteError || postError) {
+      setMessage((quoteError || postError).message);
+      return;
+    }
+
+    setMessage(isAccepted ? "Job cancelled. The customer can now choose another quote." : "Quote rescinded.");
+    loadPrivateData?.();
+    loadPublicData?.();
   }
 
   async function markQuoteJobCompleted(item) {
@@ -1308,199 +1230,6 @@ function TradieDashboard({ profile, userId, setTab, jobs, myQuotes, jobPosts, my
   </section>;
 }
 
-function ActionHeader({ title, subtitle, primary, secondary, onPrimary, onSecondary }) {
-  return <div className="action-header"><div><span className="label">Dashboard</span><h1>{title}</h1><p>{subtitle}</p></div><div className="hero-actions compact-actions"><button className="primary" onClick={onPrimary}>{primary}</button><button className="secondary" onClick={onSecondary}>{secondary}</button></div></div>;
-}
-
-function Stats({ items, activeKey }) {
-  return <div className="stats">{items.map((item) => {
-    const [label, value, icon, onClick, key] = item;
-    const clickable = typeof onClick === "function";
-    const active = activeKey && key === activeKey;
-
-    return <button
-      type="button"
-      className={`stat ${clickable ? "stat-clickable" : ""} ${active ? "stat-active" : ""}`}
-      key={label}
-      onClick={clickable ? onClick : undefined}
-      disabled={!clickable}
-    >
-      <div className="stat-ico">{icon}</div>
-      <div><strong>{value}</strong><span>{label}</span></div>
-    </button>;
-  })}</div>;
-}
-
-function ActionSection({ icon, title, subtitle, filter, children }) {
-  return <section className="action-section"><div className="section-title"><div className="section-title-left"><div className="section-ico">{icon}</div><div><h2>{title}</h2><p>{subtitle}</p></div></div>{filter && <div className="section-filter">{filter}</div>}</div><div className="tight-list">{children}</div></section>;
-}
-
-function StatusFilter({ value, onChange, options }) {
-  return <label className="filter-select"><span>Show</span><select value={value} onChange={(e) => onChange(e.target.value)}>{options.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>;
-}
-
-function filterByStatus(items, filter) {
-  if (filter === "all") return items;
-  if (filter === "requested") return items.filter(i => ["requested", "pending_response", "pending_payment"].includes(i.lifecycle_status || i.status));
-  if (filter === "accepted") return items.filter(i => ["accepted", "paid"].includes(i.lifecycle_status || i.status));
-  if (filter === "in_progress") return items.filter(i => (i.lifecycle_status || i.status) === "in_progress");
-  if (filter === "completed") return items.filter(i => (i.lifecycle_status || i.status) === "completed");
-  if (filter === "reviewed") return items.filter(i => (i.lifecycle_status || i.status) === "reviewed");
-  if (filter === "declined") return items.filter(i => (i.lifecycle_status || i.status) === "declined");
-  if (filter === "pending") return items.filter(i => ["pending", "pending_response", "pending_payment"].includes(i.status));
-  return items.filter(i => (i.lifecycle_status || i.status) === filter);
-}
-
-function lifecycleStatus(job) {
-  return job.lifecycle_status || (job.status === "pending_response" || job.status === "pending_payment" ? "requested" : job.status) || "requested";
-}
-
-function LifecycleTimeline({ status }) {
-  const steps = ["requested", "accepted", "in_progress", "completed", "reviewed"];
-  const current = status === "declined" ? 1 : Math.max(0, steps.indexOf(status));
-  if (status === "declined") {
-    return <div className="timeline declined-line"><div className="timeline-step done">Requested</div><div className="timeline-step declined">Declined</div></div>;
-  }
-  return <div className="timeline">
-    {steps.map((step, index) => <div key={step} className={`timeline-step ${index <= current ? "done" : ""} ${index === current ? "current" : ""}`}>{step.replace("_", " ")}</div>)}
-  </div>;
-}
-
-function BookingNotificationPanel({ jobs, role }) {
-  const relevant = jobs
-    .filter(j => ["requested", "accepted", "in_progress", "completed", "declined"].includes(lifecycleStatus(j)))
-    .slice(0, 4);
-
-  return <ActionSection icon={<AlertTriangle/>} title="Notifications" subtitle="Latest booking updates.">
-    {relevant.length === 0 && <Empty text="No booking updates yet."/>}
-    {relevant.map(job => {
-      const status = lifecycleStatus(job);
-      const text = role === "tradesperson"
-        ? status === "requested" ? "New customer request needs your response." : `Booking moved to ${status.replace("_", " ")}.`
-        : status === "requested" ? "Your request is waiting for tradie response." : `Your booking is now ${status.replace("_", " ")}.`;
-      return <article className="notification-card" key={job.id}>
-        <Status status={status}/>
-        <p>{text}</p>
-        <small>{job.trade || "Job"} · {job.county}</small>
-      </article>;
-    })}
-  </ActionSection>;
-}
-
-function ReviewPrompt({ job }) {
-  if (lifecycleStatus(job) !== "completed") return null;
-  return <div className="review-prompt"><Star size={16}/> Job complete — customer can now leave a review.</div>;
-}
-
-
-function JobPostCard({ job, quotesCount, onOpen, priority }) {
-  return <article className={`tight-card ${priority ? "priority" : ""}`}><div className="card-head"><div><h3>{job.job_title}</h3><p>{job.trade} · {job.county}</p></div><Status status={job.status}/></div><p className="truncate">{job.job_description}</p><div className="card-actions"><span className="chip">{quotesCount} quotes</span><button className="primary small-btn" onClick={onOpen}>View quotes & chat</button></div></article>;
-}
-
-function DirectJobCard({ job, setMessage, loadPrivateData, role = "tradesperson" }) {
-  const status = lifecycleStatus(job);
-
-  async function updateJob(nextStatus) {
-    const updates = {
-      status: nextStatus,
-      lifecycle_status: nextStatus
-    };
-
-    if (nextStatus === "accepted") updates.accepted_at = new Date().toISOString();
-    if (nextStatus === "declined") updates.declined_at = new Date().toISOString();
-    if (nextStatus === "in_progress") updates.started_at = new Date().toISOString();
-    if (nextStatus === "completed") updates.completed_at = new Date().toISOString();
-    if (nextStatus === "reviewed") updates.reviewed_at = new Date().toISOString();
-
-    const { error } = await supabase.from("job_requests").update(updates).eq("id", job.id);
-    if (error) return setMessage(error.message);
-
-const { data: { session } } = await supabase.auth.getSession();
-
-fetch("/.netlify/functions/notify-booking-status", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token}`
-  },
-  body: JSON.stringify({
-    jobRequestId: job.id,
-    status: nextStatus
-  })
-}).catch(() => {});
-
-    setMessage(`Booking updated to ${nextStatus.replace("_", " ")}.`);
-    loadPrivateData();
-  }
-
-  const tradieActions = role === "tradesperson";
-  const customerActions = role === "customer";
-
-  return <article className={`tight-card lifecycle-card ${status === "requested" ? "priority" : ""}`}>
-    <div className="card-head">
-      <div>
-        <h3>{job.trade || "Job request"}</h3>
-        <p>{job.county}</p>
-      </div>
-      <Status status={status}/>
-    </div>
-
-    <p className="truncate">{job.job_description}</p>
-    <LifecycleTimeline status={status}/>
-    <ReviewPrompt job={{...job, lifecycle_status: status}}/>
-
-    <div className="card-actions">
-      <span className="chip orange">No booking fee during launch</span>
-
-      {tradieActions && status === "requested" && <div className="button-row">
-        <button className="primary small-btn" onClick={() => updateJob("accepted")}>Accept</button>
-        <button className="danger small-btn" onClick={() => updateJob("declined")}>Decline</button>
-      </div>}
-
-      {tradieActions && status === "accepted" && <button className="primary small-btn" onClick={() => updateJob("in_progress")}>Start job</button>}
-      {tradieActions && status === "in_progress" && <button className="primary small-btn" onClick={() => updateJob("completed")}>Mark complete</button>}
-      {customerActions && status === "completed" && <button className="secondary small-btn">Leave review below</button>}
-    </div>
-  </article>;
-}
-
-
-function QuoteCard({ quote, post, onOpen, onRescind, isUpdating = false }) {
-  const status = quote.status || "pending";
-
-  return <article className={`tight-card quote-summary-${status}`}>
-    <div className="card-head">
-      <div><h3>{post?.job_title || "Job"}</h3><p>Quote sent</p></div>
-      <Status status={status}/>
-    </div>
-    <strong className="price">€{quote.price_eur}</strong>
-    <p className="truncate">{quote.note}</p>
-
-    {status === "pending" && <SmartActionNotice type="info" title="Waiting for customer" text="This remains active until the customer accepts, declines, or you rescind it."/>}
-    {status === "accepted" && <SmartActionNotice title="Accepted ✓" text="Customer accepted this quote. Open chat to arrange next steps."/>}
-    {status === "declined" && <SmartActionNotice type="danger" title="Declined" text="Customer declined this quote."/>}
-    {status === "rescinded" && <SmartActionNotice type="danger" title="Rescinded" text="You withdrew this quote."/>}
-    {status === "cancelled" && <SmartActionNotice type="danger" title="Cancelled" text="This accepted job was cancelled after discussion."/>}
-
-    <div className="button-row quote-card-actions">
-      <button className="secondary small-btn" onClick={onOpen}>Open chat</button>
-      {["pending", "accepted"].includes(status) && onRescind && (
-        <button className="danger small-btn" disabled={isUpdating} onClick={() => onRescind(quote)}>
-          {isUpdating ? (status === "accepted" ? "Cancelling..." : "Rescinding...") : (status === "accepted" ? "Cancel job" : "Rescind quote")}
-        </button>
-      )}
-    </div>
-  </article>;
-}
-
-function DirectBookings({ jobs, filter, setFilter }) {
-  return <ActionSection icon={<ClipboardCheck/>} title="Direct bookings" subtitle="Requests sent directly to tradies." filter={<StatusFilter value={filter} onChange={setFilter} options={[["all","All direct bookings"],["requested","Requested"],["accepted","Accepted"],["in_progress","In progress"],["completed","Completed"],["declined","Declined"]]}/>}>
-    {jobs.length === 0 && <Empty text="No direct bookings match this filter."/>}
-    {jobs.map(job => <DirectJobCard key={job.id} job={job} role="customer" setMessage={() => {}} loadPrivateData={() => {}} />)}
-  </ActionSection>;
-}
-
-
 function SmartActionNotice({ type = "success", title, text }) {
   return (
     <div className={`smart-notice smart-${type}`}>
@@ -1606,172 +1335,6 @@ function SuccessMessagePopup({ message, clearMessage }) {
 }
 
 
-function EmptyState({ title, text, actionText, onAction }) {
-  return (
-    <div className="empty-state premium-empty-state">
-      <div className="empty-state-icon"><AlertTriangle size={24}/></div>
-      <h3>{title}</h3>
-      <p>{text}</p>
-      {actionText && <button className="primary small-btn" onClick={onAction}>{actionText}</button>}
-    </div>
-  );
-}
-
-function Empty({ text }) {
-  return <div className="empty premium-empty">
-    <div className="empty-state-icon"><AlertTriangle size={20}/></div>
-    <strong>{text}</strong>
-  </div>;
-}
-
-function MapView({ profile, tradespeople, jobPosts, setSelectedTradie, setSelectedJobPost, setTab }) {
-  const [tradeFilter, setTradeFilter] = useState("");
-  const [countyFilter, setCountyFilter] = useState("");
-  const [activeCounty, setActiveCounty] = useState("");
-  const mapElementRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const markersRef = useRef([]);
-
-  const isCustomer = profile?.role === "customer";
-  const items = isCustomer
-    ? tradespeople.filter(t => (!tradeFilter || t.trade === tradeFilter) && (!countyFilter || t.county === countyFilter))
-    : jobPosts.filter(j => (!tradeFilter || j.trade === tradeFilter) && (!countyFilter || j.county === countyFilter));
-
-  const grouped = items.reduce((acc, item) => {
-    const county = item.county || "Ireland";
-    acc[county] = acc[county] || [];
-    acc[county].push(item);
-    return acc;
-  }, {});
-
-  const countiesOnMap = Object.keys(grouped).filter(c => countyCoords[c]);
-
-  useEffect(() => {
-    if (!mapElementRef.current || mapInstanceRef.current) return;
-
-    const map = L.map(mapElementRef.current, {
-      center: [53.4, -7.9],
-      zoom: 7,
-      scrollWheelZoom: true
-    });
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    mapInstanceRef.current = map;
-
-    setTimeout(() => map.invalidateSize(), 250);
-
-    return () => {
-      map.remove();
-      mapInstanceRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
-
-    const bounds = [];
-
-    countiesOnMap.forEach((county) => {
-      const [lat, lng] = countyCoords[county];
-      const count = grouped[county].length;
-      bounds.push([lat, lng]);
-
-      const marker = L.marker([lat, lng], {
-        icon: L.divIcon({
-          className: "kat-leaflet-pin",
-          html: `<span>${count}</span>`,
-          iconSize: [38, 38],
-          iconAnchor: [19, 38],
-          popupAnchor: [0, -34]
-        })
-      })
-        .addTo(map)
-        .bindPopup(`<strong>${county}</strong><br/>${count} ${isCustomer ? "tradesperson" : "job"}${count === 1 ? "" : "s"}`)
-        .on("click", () => {
-          setActiveCounty(county);
-          setCountyFilter(county);
-        });
-
-      markersRef.current.push(marker);
-    });
-
-    if (bounds.length > 0) {
-      map.fitBounds(bounds, { padding: [45, 45], maxZoom: 9 });
-    } else {
-      map.setView([53.4, -7.9], 7);
-    }
-  }, [countiesOnMap.join(","), items.length, isCustomer]);
-
-  const clearFilters = () => {
-    setTradeFilter("");
-    setCountyFilter("");
-    setActiveCounty("");
-    const map = mapInstanceRef.current;
-    if (map) map.setView([53.4, -7.9], 7);
-  };
-
-  return <section>
-    <div className="action-header map-header">
-      <div>
-        <span className="label">{isCustomer ? "Customer map" : "Tradesperson job map"}</span>
-        <h1>{isCustomer ? "Find tradespeople near you" : "Find jobs near you"}</h1>
-        <p>{isCustomer ? "Real map view with county-level pins to protect privacy until a booking is agreed." : "View open customer jobs by county and quote the work that suits you."}</p>
-      </div>
-      <div className="hero-actions compact-actions">
-        <button className="primary" onClick={clearFilters}>Reset map</button>
-      </div>
-    </div>
-
-    <div className="map-filters">
-      <Select label="Trade" value={tradeFilter} onChange={(e)=>setTradeFilter(e.target.value)} options={trades}/>
-      <Select label="County" value={countyFilter} onChange={(e)=>setCountyFilter(e.target.value)} options={counties}/>
-    </div>
-
-    <div className="map-layout">
-      <div className="real-map-card">
-        <div ref={mapElementRef} className="leaflet-map" />
-        <div className="map-note">
-          <strong>Privacy-safe map:</strong> pins show county areas, not exact addresses.
-        </div>
-      </div>
-
-      <aside className="map-side">
-        <div className="map-side-head">
-          <div>
-            <h2>{isCustomer ? "Available tradespeople" : "Open jobs"}</h2>
-            <p>{countyFilter ? `${countyFilter} · ` : ""}{items.length} result{items.length === 1 ? "" : "s"}</p>
-          </div>
-          {activeCounty && <span className="chip orange">{activeCounty}</span>}
-        </div>
-
-        <div className="map-results">
-          {items.length === 0 && <Empty text="No map results match your filters."/>}
-          {items.map(item => isCustomer
-            ? <MapTradieCard key={item.id} tradie={item} onOpen={() => { setSelectedTradie(item); setTab("book"); }} />
-            : <MapJobCard key={item.id} job={item} onOpen={() => { setSelectedJobPost(item); setTab("job-chat"); }} />
-          )}
-        </div>
-      </aside>
-    </div>
-  </section>;
-}
-
-
-function MapTradieCard({ tradie, onOpen }) {
-  return <article className="map-result-card"><div className="card-head"><div><h3>{tradie.business_name}</h3><p>{tradie.trade} · {tradie.county}</p></div><Status status={tradie.availability || "Available"} /></div><p className="truncate">{tradie.bio || "Approved tradesperson available for local work."}</p><button className="primary small-btn" onClick={onOpen}>Request booking</button></article>;
-}
-
-function MapJobCard({ job, onOpen }) {
-  return <article className="map-result-card priority"><div className="card-head"><div><h3>{job.job_title}</h3><p>{job.trade} · {job.county}</p></div><Status status={job.status} /></div><p className="truncate">{job.job_description}</p><div className="card-actions"><span className="chip">€{job.budget_min || 0} - €{job.budget_max || "open"}</span><button className="primary small-btn" onClick={onOpen}>View / quote</button></div></article>;
-}
-
 function SearchPage({ visibleTradies, filters, setFilters, photosFor, avgRating, reviewsFor, setSelectedTradie, setTab }) {
   return <section>
     <div className="page-title">
@@ -1780,8 +1343,8 @@ function SearchPage({ visibleTradies, filters, setFilters, photosFor, avgRating,
     </div>
 
     <div className="filters">
-      <Select label="Trade" value={filters.trade} onChange={(e)=>setFilters({...filters, trade:e.target.value})} options={trades}/>
-      <Select label="County" value={filters.county} onChange={(e)=>setFilters({...filters, county:e.target.value})} options={counties}/>
+      <Select label="Trade" value={filters.trade} onChange={(e)=>setFilters({...filters, trade:e.target.value})} options={TRADES}/>
+      <Select label="County" value={filters.county} onChange={(e)=>setFilters({...filters, county:e.target.value})} options={COUNTIES}/>
     </div>
 
     <div className="cards">
@@ -1795,7 +1358,7 @@ function SearchPage({ visibleTradies, filters, setFilters, photosFor, avgRating,
 
         return <article className="tradie-card enhanced-tradie-card clickable-tradie-card" key={t.id} role="button" tabIndex="0" onClick={() => { setSelectedTradie(t); setTab("tradie-profile"); }} onKeyDown={(e) => { if (e.key === "Enter") { setSelectedTradie(t); setTab("tradie-profile"); } }}>
           <div className="card-cover">
-            <img src={photos[0]?.image_url || stockImages[1]} alt="Work" />
+            <img src={photos[0]?.image_url || STOCK_IMAGES[1]} alt="Work" />
             <span className={`approved-badge ${verified ? "verified-public-badge" : ""}`}>
               <BadgeCheck size={15}/> {verified ? "Verified" : "Approved"}
             </span>
@@ -1968,7 +1531,7 @@ function ProfileForm({ profile, setMessage, loadProfile }) {
     const { error } = await supabase.from("profiles").update({ full_name:f.get("full_name"), phone:f.get("phone"), county:f.get("county") }).eq("id", profile.id);
     if (error) setMessage(error.message); else { setMessage("Profile saved."); loadProfile(); }
   }
-  return <form className="side-card" onSubmit={submit}><h3><HomeIcon size={17}/> Profile</h3><Input label="Full name" name="full_name" defaultValue={profile.full_name || ""}/><Input label="Phone" name="phone" defaultValue={profile.phone || ""}/><Select label="County" name="county" defaultValue={profile.county || ""} options={counties}/><button className="primary">Save</button></form>;
+  return <form className="side-card" onSubmit={submit}><h3><HomeIcon size={17}/> Profile</h3><Input label="Full name" name="full_name" defaultValue={profile.full_name || ""}/><Input label="Phone" name="phone" defaultValue={profile.phone || ""}/><Select label="County" name="county" defaultValue={profile.county || ""} options={COUNTIES}/><button className="primary">Save</button></form>;
 }
 
 function TradieForm({ userId, setMessage, loadPublicData }) {
@@ -2065,8 +1628,8 @@ function TradieForm({ userId, setMessage, loadPublicData }) {
     <Input label="Business name" name="business_name" defaultValue={tradie?.business_name || ""} required/>
     <Input label="Contact name" name="contact_name" defaultValue={tradie?.contact_name || ""}/>
     <Input label="Phone" name="phone" defaultValue={tradie?.phone || ""}/>
-    <Select label="Trade" name="trade" defaultValue={tradie?.trade || ""} options={trades} required/>
-    <Select label="County" name="county" defaultValue={tradie?.county || ""} options={counties} required/>
+    <Select label="Trade" name="trade" defaultValue={tradie?.trade || ""} options={TRADES} required/>
+    <Select label="County" name="county" defaultValue={tradie?.county || ""} options={COUNTIES} required/>
     <Input label="Service area" name="service_area" defaultValue={tradie?.service_area || ""}/>
     <Select label="Availability" name="availability" defaultValue={tradie?.availability || "Available"} options={["Available","Busy","Unavailable"]}/>
     <Input label="Licence / registration number" name="licence_number" defaultValue={tradie?.licence_number || ""}/>
@@ -2172,7 +1735,7 @@ function PostJob({ profile, setMessage, loadPrivateData, setTab }) {
     setMessage("Job posted. Tradespeople can now quote and chat.");
     loadPrivateData(); setTab("dashboard");
   }
-  return <section className="panel narrow"><h2>Post a Job</h2><p className="muted">Describe what you need done. Tradespeople can quote and message you.</p><form onSubmit={submit}><Input label="Job title" name="job_title" required/><Select label="Trade needed" name="trade" options={trades} required/><Select label="County" name="county" options={counties} required/><Textarea label="Job description" name="job_description" required/><div className="two-col"><Input label="Budget min (€)" name="budget_min" type="number"/><Input label="Budget max (€)" name="budget_max" type="number"/></div><Select label="Urgency" name="urgency" options={["ASAP","This week","This month","Flexible"]}/><Input label="Preferred date" name="preferred_date" type="date"/><button className="primary full">Post job</button></form></section>;
+  return <section className="panel narrow"><h2>Post a Job</h2><p className="muted">Describe what you need done. Tradespeople can quote and message you.</p><form onSubmit={submit}><Input label="Job title" name="job_title" required/><Select label="Trade needed" name="trade" options={TRADES} required/><Select label="County" name="county" options={COUNTIES} required/><Textarea label="Job description" name="job_description" required/><div className="two-col"><Input label="Budget min (€)" name="budget_min" type="number"/><Input label="Budget max (€)" name="budget_max" type="number"/></div><Select label="Urgency" name="urgency" options={["ASAP","This week","This month","Flexible"]}/><Input label="Preferred date" name="preferred_date" type="date"/><button className="primary full">Post job</button></form></section>;
 }
 
 
@@ -2561,16 +2124,16 @@ function AvailableJobs({ jobPosts, myTradie, profile, setMessage, loadPrivateDat
       <div>
         <label>Trade</label>
         <select value={tradeFilter} onChange={(e) => setTradeFilter(e.target.value)}>
-          <option value="">All trades</option>
-          {trades.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
+          <option value="">All TRADES</option>
+          {TRADES.map((trade) => <option key={trade} value={trade}>{trade}</option>)}
         </select>
       </div>
 
       <div>
         <label>County</label>
         <select value={countyFilter} onChange={(e) => setCountyFilter(e.target.value)}>
-          <option value="">All counties</option>
-          {counties.map((county) => <option key={county} value={county}>{county}</option>)}
+          <option value="">All COUNTIES</option>
+          {COUNTIES.map((county) => <option key={county} value={county}>{county}</option>)}
         </select>
       </div>
 
@@ -2580,7 +2143,7 @@ function AvailableJobs({ jobPosts, myTradie, profile, setMessage, loadPrivateDat
     <div className="jobs-board-summary">
       <div><strong>{filteredJobs.length}</strong><span>Matching jobs</span></div>
       <div><strong>{jobPosts.length}</strong><span>Total open jobs</span></div>
-      <div><strong>{tradeFilter || "All trades"}</strong><span>Current trade filter</span></div>
+      <div><strong>{tradeFilter || "All TRADES"}</strong><span>Current trade filter</span></div>
     </div>
 
     {filteredJobs.length === 0 && jobPosts.length > 0 && <div className="smart-empty-board">
@@ -2740,6 +2303,16 @@ async function submitQuote(e) {
   async function acceptQuote(q) {
     if (!q?.id || profile.role !== "customer") return;
 
+    const tradieName =
+      tradespeople.find((tradie) => tradie.id === q.tradesperson_id)?.business_name ||
+      "this tradesperson";
+
+    const confirmed = window.confirm(
+      `Accept the €${q.price_eur} quote from ${tradieName}? This will confirm them for the job.`
+    );
+
+    if (!confirmed) return;
+
     setQuoteActionId(q.id);
 
     try {
@@ -2810,6 +2383,16 @@ async function submitQuote(e) {
   async function declineQuote(q) {
     if (!q?.id || profile.role !== "customer") return;
 
+    const tradieName =
+      tradespeople.find((tradie) => tradie.id === q.tradesperson_id)?.business_name ||
+      "this tradesperson";
+
+    const confirmed = window.confirm(
+      `Decline the €${q.price_eur} quote from ${tradieName}? It will move out of your active quotes.`
+    );
+
+    if (!confirmed) return;
+
     setQuoteActionId(q.id);
 
     try {
@@ -2818,21 +2401,15 @@ async function submitQuote(e) {
         .update({ status: "declined" })
         .eq("id", q.id);
 
-  const loadedQuotes = quotesFor(jobPost.id) || [];
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
 
-  const quoteCandidates =
-    recentlySubmittedQuote &&
-    !loadedQuotes.some((quote) => quote.id === recentlySubmittedQuote.id)
-      ? [...loadedQuotes, recentlySubmittedQuote]
-      : loadedQuotes;
-
-  const qlist = quoteCandidates.map((quote) => {
-    const overriddenStatus = quoteStatusOverrides[quote.id];
-
-    return overriddenStatus
-      ? { ...quote, status: overriddenStatus }
-      : quote;
-  });
+      setQuoteStatusOverrides((current) => ({
+        ...current,
+        [q.id]: "declined"
+      }));
 
       if (recentlyAcceptedQuote?.id === q.id) {
         setRecentlyAcceptedQuote(null);
@@ -2915,13 +2492,21 @@ async function submitQuote(e) {
     }
   }
 
-const loadedQuotes = quotesFor(jobPost.id);
+  const loadedQuotes = quotesFor(jobPost.id) || [];
 
-const qlist =
-  recentlySubmittedQuote &&
-  !loadedQuotes.some((quote) => quote.id === recentlySubmittedQuote.id)
-    ? [...loadedQuotes, recentlySubmittedQuote]
-    : loadedQuotes;
+  const quoteCandidates =
+    recentlySubmittedQuote &&
+    !loadedQuotes.some((quote) => quote.id === recentlySubmittedQuote.id)
+      ? [...loadedQuotes, recentlySubmittedQuote]
+      : loadedQuotes;
+
+  const qlist = quoteCandidates.map((quote) => {
+    const overriddenStatus = quoteStatusOverrides[quote.id];
+
+    return overriddenStatus
+      ? { ...quote, status: overriddenStatus }
+      : quote;
+  });
 
 const pendingQuotes = qlist.filter((q) => q.status === "pending");
 const acceptedQuotes = qlist.filter((q) => q.status === "accepted");
@@ -2966,6 +2551,61 @@ const myActiveQuote =
   ) || null;
 
 const isCustomer = profile.role === "customer";
+const messageList = messagesFor(jobPost.id) || [];
+
+function messageSenderLabel(message) {
+  if (message.sender_id === profile.id) return "You";
+  return isCustomer ? acceptedTradieName : "Customer";
+}
+
+function scrollToWorkspaceSection(sectionId) {
+  document.getElementById(sectionId)?.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+const nextAction = isCustomer
+  ? acceptedQuote
+    ? {
+        eyebrow: "Your next step",
+        title: "Arrange the job with your tradesperson",
+        text: "Confirm the date, access and final details in the job conversation.",
+        button: "Open job chat",
+        target: "workspace-conversation"
+      }
+    : qlist.length > 0
+      ? {
+          eyebrow: "Your next step",
+          title: "Compare your quotes",
+          text: "Review the prices and messages, then accept the quote that suits you best.",
+          button: "Review quotes",
+          target: "workspace-quotes"
+        }
+      : {
+          eyebrow: "Current status",
+          title: "Waiting for tradespeople to quote",
+          text: "Your job is live. New quotes will appear here as soon as they arrive.",
+          button: "View job details",
+          target: "workspace-job-details"
+        }
+  : myActiveQuote
+    ? {
+        eyebrow: "Your next step",
+        title: myActiveQuote.status === "accepted" ? "Arrange the job details" : "Stay available for questions",
+        text: myActiveQuote.status === "accepted"
+          ? "Use the conversation to agree the date, access and final details."
+          : "The customer is reviewing your quote. You can answer questions in the conversation.",
+        button: "Open conversation",
+        target: "workspace-conversation"
+      }
+    : {
+        eyebrow: "Your next step",
+        title: "Send a clear quote",
+        text: "Add your price and a short message explaining what is included.",
+        button: "Create quote",
+        target: "workspace-quote-composer"
+      };
 
   return <section>
     <div className="action-header">
@@ -2982,8 +2622,27 @@ const isCustomer = profile.role === "customer";
       <div><strong>{acceptedQuotes.length}</strong><span>Accepted</span></div>
       <div><strong>{declinedQuotes.length}</strong><span>Declined/closed</span></div>
     </div>
+
+    <div className="workspace-next-action" role="status">
+      <div className="workspace-next-action-icon">
+        {acceptedQuote ? <CheckCircle size={22}/> : <ArrowRight size={22}/>}
+      </div>
+      <div className="workspace-next-action-copy">
+        <span className="label">{nextAction.eyebrow}</span>
+        <h2>{nextAction.title}</h2>
+        <p>{nextAction.text}</p>
+      </div>
+      <button
+        type="button"
+        className="primary"
+        onClick={() => scrollToWorkspaceSection(nextAction.target)}
+      >
+        {nextAction.button}
+      </button>
+    </div>
+
     <div className="job-workspace-overview">
-  <div className="side-card job-workspace-details">
+  <div id="workspace-job-details" className="side-card job-workspace-details">
     <span className="label">Job details</span>
     <h2>{jobPost.job_title}</h2>
 
@@ -3001,7 +2660,7 @@ const isCustomer = profile.role === "customer";
   </div>
 
   {!isCustomer && (
-    <div className="side-card job-workspace-quote-composer">
+    <div id="workspace-quote-composer" className="side-card job-workspace-quote-composer">
       <span className="label">
         {myActiveQuote ? "Your current quote" : "Send your quote"}
       </span>
@@ -3084,7 +2743,7 @@ const isCustomer = profile.role === "customer";
 
     <div className="job-workspace-main">
   {isCustomer && (
-    <div className="side-card workspace-quotes-panel">
+    <div id="workspace-quotes" className="side-card workspace-quotes-panel">
       <div className="quote-panel-head">
         <div>
           <span className="label">Quote management</span>
@@ -3151,23 +2810,30 @@ const isCustomer = profile.role === "customer";
               {q.note && <p>{q.note}</p>}
 
               {q.status === "pending" && (
-                <div className="quote-actions">
-                  <button
-                    className="primary small-btn"
-                    disabled={acting}
-                    onClick={() => acceptQuote(q)}
-                  >
-                    {acting ? "Updating..." : "Accept quote"}
-                  </button>
+                <>
+                  <div className="quote-decision-guide">
+                    <strong>Decision needed</strong>
+                    <span>Review the price and message before choosing this tradesperson.</span>
+                  </div>
 
-                  <button
-                    className="danger small-btn"
-                    disabled={acting}
-                    onClick={() => declineQuote(q)}
-                  >
-                    {acting ? "Updating..." : "Decline quote"}
-                  </button>
-                </div>
+                  <div className="quote-actions quote-decision-actions">
+                    <button
+                      className="primary small-btn"
+                      disabled={acting}
+                      onClick={() => acceptQuote(q)}
+                    >
+                      {acting ? "Updating..." : `Accept €${q.price_eur} quote`}
+                    </button>
+
+                    <button
+                      className="quote-decline-btn small-btn"
+                      disabled={acting}
+                      onClick={() => declineQuote(q)}
+                    >
+                      {acting ? "Updating..." : "Decline"}
+                    </button>
+                  </div>
+                </>
               )}
 
               {q.status === "accepted" && (
@@ -3220,7 +2886,7 @@ const isCustomer = profile.role === "customer";
   )}
 
   <div className="workspace-conversation-layout">
-    <div className="side-card workspace-conversation">
+    <div id="workspace-conversation" className="side-card workspace-conversation">
       <div className="workspace-section-head">
         <div>
           <span className="label">Conversation</span>
@@ -3293,34 +2959,32 @@ const isCustomer = profile.role === "customer";
         </button>
       </div>
 
-      <div className="messages workspace-messages">
-        {(messagesFor(jobPost.id) || []).length === 0 && (
+      <div className="messages workspace-messages" aria-live="polite">
+        {messageList.length === 0 && (
           <div className="chat-empty">
             <MessageCircle size={28} />
-
             <strong>No messages yet</strong>
-
-            <span>
-              Send the first message to begin discussing this job.
-            </span>
+            <span>Send the first message to begin discussing this job.</span>
           </div>
         )}
 
-        {(messagesFor(jobPost.id) || []).map((m) => {
+        {messageList.map((m) => {
           const mine = m.sender_id === profile.id;
 
           return (
-            <div
-              className={`msg ${mine ? "mine" : ""}`}
-              key={m.id}
-            >
-              <span>{m.message}</span>
-
-              {m.created_at && (
-                <small>
-                  {new Date(m.created_at).toLocaleString()}
-                </small>
-              )}
+            <div className={`workspace-message-row ${mine ? "mine" : ""}`} key={m.id}>
+              <div className="workspace-message-sender">{messageSenderLabel(m)}</div>
+              <div className={`msg ${mine ? "mine" : ""}`}>
+                <span>{m.message}</span>
+                {m.created_at && (
+                  <small>
+                    {new Date(m.created_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    })}
+                  </small>
+                )}
+              </div>
             </div>
           );
         })}
@@ -3434,12 +3098,7 @@ function Booking({ selectedTradie, profile, setMessage, loadPrivateData, setTab 
     setMessage("Booking request sent. The tradesperson has been notified.");
     loadPrivateData(); setTab("dashboard");
   }
-  return <section className="panel narrow"><h2>Request booking</h2><p className="muted">No booking fee is charged during launch. Send your request and track updates from your dashboard.</p><form onSubmit={submit}><Select label="County" name="county" options={counties} defaultValue={profile?.county || ""}/><Textarea label="Describe the job" name="job_description" required/><button className="primary full">Send booking request</button></form></section>;
-}
-
-function Status({ status }) {
-  const label = status === "pending_response" ? "Awaiting response" : status === "quote_accepted" ? "Quote accepted" : status === "cancelled" ? "Cancelled" : status || "pending";
-  return <span className={`status status-${String(status).replaceAll(" ", "_")}`}>{label}</span>;
+  return <section className="panel narrow"><h2>Request booking</h2><p className="muted">No booking fee is charged during launch. Send your request and track updates from your dashboard.</p><form onSubmit={submit}><Select label="County" name="county" options={COUNTIES} defaultValue={profile?.county || ""}/><Textarea label="Describe the job" name="job_description" required/><button className="primary full">Send booking request</button></form></section>;
 }
 
 function Admin({ tradespeople, documents, setMessage, loadPublicData, loadPrivateData }) {
@@ -3526,9 +3185,5 @@ function Admin({ tradespeople, documents, setMessage, loadPublicData, loadPrivat
   </section>;
 }
 
-
-function Input({ label, ...props }) { return <label className="field"><span>{label}</span><input {...props}/></label>; }
-function Select({ label, options, ...props }) { return <label className="field"><span>{label}</span><select {...props}><option value="">Select</option>{options.map(o => typeof o === "string" ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>)}</select></label>; }
-function Textarea({ label, ...props }) { return <label className="field"><span>{label}</span><textarea rows="5" {...props}/></label>; }
 
 createRoot(document.getElementById("root")).render(<App />);

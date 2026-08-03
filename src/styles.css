@@ -3445,3 +3445,360 @@ button:active,
     border-radius: 12px;
   }
 }
+/* Workspace messenger polish — Batch 2 */
+.workspace-conversation {
+  overflow: hidden;
+}
+
+.workspace-messages {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 320px;
+  max-height: 540px;
+  padding: 18px;
+  scroll-behavior: smooth;
+}
+
+.workspace-message-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.workspace-message-row.mine {
+  align-items: flex-end;
+}
+
+.workspace-message-sender {
+  margin: 0 8px 4px;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .02em;
+}
+
+.workspace-messages .msg,
+.workspace-messages .msg.mine {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  width: auto !important;
+  min-width: 0;
+  min-height: 0 !important;
+  max-width: min(74%, 620px);
+  margin: 0;
+  padding: 11px 14px 9px;
+  line-height: 1.45;
+}
+
+.workspace-messages .msg {
+  border-radius: 18px 18px 18px 6px;
+  background: #fff;
+}
+
+.workspace-messages .msg.mine {
+  border-radius: 18px 18px 6px 18px;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+}
+
+.workspace-messages .msg small {
+  align-self: flex-end;
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.workspace-message-form {
+  position: sticky;
+  bottom: 0;
+  padding-top: 12px;
+  background: #fff;
+}
+
+.workspace-message-form input {
+  min-height: 48px;
+}
+
+.workspace-quotes-panel .customer-quote-card {
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.workspace-quotes-panel .customer-quote-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, .08);
+}
+
+.quote-card-accepted {
+  background: linear-gradient(135deg, #f0fdf4, #fff);
+}
+
+.quote-card-declined,
+.quote-card-rescinded,
+.quote-card-cancelled {
+  background: #fafafa;
+}
+
+@media (max-width: 640px) {
+  .workspace-messages {
+    min-height: 280px;
+    max-height: 460px;
+    padding: 12px;
+  }
+
+  .workspace-messages .msg,
+  .workspace-messages .msg.mine {
+    max-width: 88%;
+  }
+}
+
+/* Sprint 7B: clearer quote decisions */
+.quote-decision-guide {
+  display: grid;
+  gap: 3px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  background: #fff7ed;
+}
+
+.quote-decision-guide strong {
+  color: #9a3412;
+  font-size: 13px;
+}
+
+.quote-decision-guide span {
+  color: #57534e;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.quote-decision-actions {
+  align-items: center;
+}
+
+.quote-decline-btn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #4b5563;
+  font-weight: 900;
+  border-radius: 12px;
+}
+
+.quote-decline-btn:hover {
+  border-color: #fca5a5;
+  background: #fff1f2;
+  color: #991b1b;
+}
+
+.workspace-quotes-panel .quote-card-pending {
+  border-left: 4px solid var(--orange);
+}
+
+.workspace-quotes-panel .quote-card-accepted {
+  border-left: 4px solid #16a34a;
+}
+
+@media (max-width: 600px) {
+  .quote-decision-actions button {
+    width: 100%;
+  }
+}
+
+
+/* Sprint 8A: consistent, accessible loading states */
+.loading-state{
+  min-height:220px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  padding:36px 28px;
+  border:1px solid #e4e4e7;
+  border-radius:24px;
+  background:linear-gradient(180deg,#fff,#fafafa);
+  box-shadow:var(--shadow-soft);
+  color:#18181b;
+}
+
+.loading-state-icon{
+  width:54px;
+  height:54px;
+  flex:0 0 54px;
+  display:grid;
+  place-items:center;
+  border-radius:18px;
+  background:#fff7ed;
+  color:var(--orange);
+}
+
+.loading-state-icon svg{
+  animation:kta-loading-spin .9s linear infinite;
+}
+
+.loading-state strong{
+  display:block;
+  margin-bottom:6px;
+  font-size:22px;
+  letter-spacing:-.03em;
+}
+
+.loading-state p{
+  margin:0;
+  color:var(--muted);
+  font-weight:700;
+  line-height:1.5;
+}
+
+@keyframes kta-loading-spin{
+  to{ transform:rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .loading-state-icon svg{ animation:none; }
+}
+
+@media(max-width:640px){
+  .loading-state{
+    min-height:190px;
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
+
+/* Sprint 8B final map alignment fix
+   Keep the map and results in the same page scroll flow. */
+.map-layout {
+  align-items: start;
+}
+
+.map-side {
+  max-height: none;
+  overflow: visible;
+}
+
+@media (max-width: 1050px) {
+  .map-side {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* Sprint 8B map/header overlap fix
+   Keep Leaflet inside its own stacking context and always render the sticky
+   navigation above map tiles, markers, popups and controls. */
+.nav {
+  z-index: 2000;
+}
+
+.real-map-card {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
+.leaflet-map,
+.leaflet-container {
+  z-index: 0;
+}
+
+
+/* Sprint 9A: mobile navigation and overflow safety */
+html,body,#root{
+  width:100%;
+  max-width:100%;
+}
+html{
+  overflow-x:clip;
+}
+body{
+  overflow-x:hidden;
+}
+img,svg,video,canvas{
+  max-width:100%;
+}
+.container,
+.hero-v2,
+.action-header,
+.action-layout,
+.map-layout,
+.chat-layout,
+.cards,
+.filters,
+.two-col{
+  min-width:0;
+}
+.nav{
+  isolation:isolate;
+}
+.mobile-menu-btn:focus-visible,
+.nav-links button:focus-visible{
+  outline:3px solid #fdba74;
+  outline-offset:3px;
+}
+
+@media(max-width:760px){
+  .nav{
+    width:100%;
+    padding-top:10px;
+    padding-bottom:10px;
+  }
+
+  .logo{
+    min-width:0;
+    max-width:calc(100vw - 96px);
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .nav-links{
+    max-height:calc(100vh - 86px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+
+  .nav.nav-open{
+    box-shadow:0 16px 30px rgba(0,0,0,.24);
+  }
+
+  .container,
+  .hero-v2,
+  footer{
+    width:100%;
+    max-width:100%;
+  }
+
+  .action-header,
+  .panel,
+  .side-card,
+  .tight-card,
+  .real-map-card,
+  .map-side{
+    max-width:100%;
+  }
+
+  .card-actions,
+  .button-row,
+  .hero-actions{
+    align-items:stretch;
+  }
+
+  .card-actions > button,
+  .button-row > button{
+    max-width:100%;
+  }
+}
+
+@media(max-width:420px){
+  .logo{
+    font-size:19px;
+  }
+  .nav-links button{
+    padding:13px 14px;
+  }
+}
