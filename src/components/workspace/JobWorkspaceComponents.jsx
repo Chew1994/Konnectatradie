@@ -206,9 +206,14 @@ function LoadingState({ title = "Loading…", text = "Please wait while we get e
   return (
     <div className="loading-state" role="status" aria-live="polite" aria-busy="true">
       <div className="loading-state-icon"><LoaderCircle size={26} aria-hidden="true"/></div>
-      <div>
+      <div className="loading-state-copy">
         <strong>{title}</strong>
         <p>{text}</p>
+        <div className="loading-skeleton" aria-hidden="true">
+          <span/>
+          <span/>
+          <span/>
+        </div>
       </div>
     </div>
   );

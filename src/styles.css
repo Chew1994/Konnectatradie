@@ -3659,8 +3659,37 @@ button:active,
   to{ transform:rotate(360deg); }
 }
 
+.loading-state-copy{
+  width:min(100%,440px);
+}
+
+.loading-skeleton{
+  display:grid;
+  gap:9px;
+  margin-top:18px;
+}
+
+.loading-skeleton span{
+  display:block;
+  height:10px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#e4e4e7 25%,#f4f4f5 50%,#e4e4e7 75%);
+  background-size:200% 100%;
+  animation:kta-loading-shimmer 1.25s ease-in-out infinite;
+}
+
+.loading-skeleton span:nth-child(1){ width:100%; }
+.loading-skeleton span:nth-child(2){ width:82%; }
+.loading-skeleton span:nth-child(3){ width:58%; }
+
+@keyframes kta-loading-shimmer{
+  from{ background-position:200% 0; }
+  to{ background-position:-200% 0; }
+}
+
 @media (prefers-reduced-motion: reduce){
-  .loading-state-icon svg{ animation:none; }
+  .loading-state-icon svg,
+  .loading-skeleton span{ animation:none; }
 }
 
 @media(max-width:640px){
