@@ -17,6 +17,7 @@ import { DashboardErrorBoundary, IdentityActionHeader, MessengerPopup, Notificat
 import "./styles.css";
 
 const MapView = lazy(() => import("./components/workspace/MapView"));
+const LazySearchPage = lazy(() => import("./components/workspace/SearchPage"));
 
 const BOOKING_FEE = 5;
 
@@ -288,7 +289,27 @@ function App() {
       {tab === "privacy" && <LegalPage type="privacy" setTab={setTab} />}
       {tab === "terms" && <LegalPage type="terms" setTab={setTab} />}
       {tab === "legal" && <LegalPage type="legal" setTab={setTab} />}
-      {tab === "search" && <SearchPage visibleTradies={visibleTradies} filters={filters} setFilters={setFilters} photosFor={photosFor} avgRating={avgRating} reviewsFor={reviewsFor} setSelectedTradie={setSelectedTradie} setTab={setTab} />}
+      {tab === "search" && (
+  <Suspense
+    fallback={
+      <LoadingState
+        title="Loading tradespeople…"
+        text="We are preparing approved profiles and search filters."
+      />
+    }
+  >
+    <LazySearchPage
+      visibleTradies={visibleTradies}
+      filters={filters}
+      setFilters={setFilters}
+      photosFor={photosFor}
+      avgRating={avgRating}
+      reviewsFor={reviewsFor}
+      setSelectedTradie={setSelectedTradie}
+      setTab={setTab}
+    />
+  </Suspense>
+)}
       {tab === "tradie-profile" && selectedTradie && <TradieProfile tradie={selectedTradie} photos={photosFor(selectedTradie.id)} reviews={reviewsFor(selectedTradie.id)} avgRating={avgRating(selectedTradie.id)} setTab={setTab} setSelectedTradie={setSelectedTradie} />}
       {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
       {tab === "book" && (session ? <Booking selectedTradie={selectedTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage}/>)}
@@ -1352,60 +1373,7 @@ function SuccessMessagePopup({ message, clearMessage }) {
 }
 
 
-function SearchPage({ visibleTradies, filters, setFilters, photosFor, avgRating, reviewsFor, setSelectedTradie, setTab }) {
-  return <section>
-    <div className="page-title">
-      <h1>Find a local Tradie</h1>
-      <p>Search approved tradespeople by trade and county. Check reviews, portfolios and availability before sending a request.</p>
-    </div>
 
-    <div className="filters">
-      <Select label="Trade" value={filters.trade} onChange={(e)=>setFilters({...filters, trade:e.target.value})} options={TRADES}/>
-      <Select label="County" value={filters.county} onChange={(e)=>setFilters({...filters, county:e.target.value})} options={COUNTIES}/>
-    </div>
-
-    <div className="cards">
-      {visibleTradies.length === 0 && <Empty text="No approved tradies match yet."/>}
-
-      {visibleTradies.map(t => {
-        const reviewCount = reviewsFor(t.id).length;
-        const rating = avgRating(t.id);
-        const photos = photosFor(t.id);
-        const verified = t.verification_status === "verified";
-
-        return <article className="tradie-card enhanced-tradie-card clickable-tradie-card" key={t.id} role="button" tabIndex="0" onClick={() => { setSelectedTradie(t); setTab("tradie-profile"); }} onKeyDown={(e) => { if (e.key === "Enter") { setSelectedTradie(t); setTab("tradie-profile"); } }}>
-          <div className="card-cover">
-            <img src={photos[0]?.image_url || STOCK_IMAGES[1]} alt="Work" />
-            <span className={`approved-badge ${verified ? "verified-public-badge" : ""}`}>
-              <BadgeCheck size={15}/> {verified ? "Verified" : "Approved"}
-            </span>
-          </div>
-
-          <div className="tradie-body">
-            <div className="card-head">
-              <div>
-                <h3>{t.business_name}</h3>
-                <p>{t.trade} · {t.county}</p>
-              </div>
-              <span className="rating strong-rating"><Star size={15}/> {rating}</span>
-            </div>
-
-            <div className="review-micro-row">
-              <span>{reviewCount} review{reviewCount === 1 ? "" : "s"}</span>
-              <span>·</span>
-              <span>{photos.length}/5 photos</span>
-              {verified && <><span>·</span><span>Verified profile</span></>}
-            </div>
-
-            <p className="bio">{t.bio || "Approved tradesperson available for local work."}</p>
-
-            <div className="card-click-hint">Click card to view profile, reviews and booking options</div>
-          </div>
-        </article>;
-      })}
-    </div>
-  </section>;
-}
 
 function TradieProfile({ tradie, photos, reviews, avgRating, setTab, setSelectedTradie }) {
   const [activePhotoIndex, setActivePhotoIndex] = useState(null);
