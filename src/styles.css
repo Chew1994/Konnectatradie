@@ -2787,6 +2787,14 @@ button:active,
 }
 
 /* Urgent stability + notifications + chat patch */
+.account-recovery-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px 20px;
+  align-items:center;
+  margin-top:4px;
+  margin-bottom:8px;
+}
 .forgot-password-link{
   border:0;
   background:transparent;
