@@ -14,6 +14,10 @@ import {
 } from "./components/workspace/JobWorkspaceComponents";
 import { COUNTIES, STOCK_IMAGES, TRADES } from "./constants";
 import { DashboardErrorBoundary, IdentityActionHeader, MessengerPopup, NotificationStrip } from "./components/dashboard/DashboardShellComponents";
+import {
+  ProfileForm,
+  ReviewForm
+} from "./components/dashboard/CustomerDashboardForms";
 import "./styles.css";
 import SmartOnboardingPanel from "./components/dashboard/SmartOnboardingPanel";
 
@@ -1323,20 +1327,6 @@ function SuccessMessagePopup({ message, clearMessage }) {
 }
 
 
-
-
-
-
-function ProfileForm({ profile, setMessage, loadProfile }) {
-  async function submit(e) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const { error } = await supabase.from("profiles").update({ full_name:f.get("full_name"), phone:f.get("phone"), county:f.get("county") }).eq("id", profile.id);
-    if (error) setMessage(error.message); else { setMessage("Profile saved."); loadProfile(); }
-  }
-  return <form className="side-card" onSubmit={submit}><h3><HomeIcon size={17}/> Profile</h3><Input label="Full name" name="full_name" defaultValue={profile.full_name || ""}/><Input label="Phone" name="phone" defaultValue={profile.phone || ""}/><Select label="County" name="county" defaultValue={profile.county || ""} options={COUNTIES}/><button className="primary">Save</button></form>;
-}
-
 function TradieForm({ userId, setMessage, loadPublicData }) {
   const [tradie, setTradie] = useState(null);
   const [photos, setPhotos] = useState([]);
@@ -1514,19 +1504,6 @@ function VerificationUpload({ userId, tradie, documents, setMessage, loadPrivate
       </div>)}
     </div>
   </section>;
-}
-
-
-function ReviewForm({ profile, setMessage, loadPublicData }) {
-  const [tradies, setTradies] = useState([]);
-  useEffect(() => { supabase.from("tradesperson_profiles").select("*").then(({data}) => setTradies(data || [])); }, []);
-  async function submit(e) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const { error } = await supabase.from("reviews").insert({ customer_id: profile.id, tradesperson_id: f.get("tradesperson_id"), rating: Number(f.get("rating")), comment: f.get("comment") });
-    if (error) setMessage(error.message); else { setMessage("Review added."); e.currentTarget.reset(); loadPublicData(); }
-  }
-  return <form className="side-card" onSubmit={submit}><h3><Star size={17}/> Add a review</h3><Select label="Tradesperson" name="tradesperson_id" options={tradies.map(t => ({label:t.business_name, value:t.id}))} required/><Select label="Rating" name="rating" options={["5","4","3","2","1"]} required/><Textarea label="Comment" name="comment" required/><button className="primary">Submit review</button></form>;
 }
 
 function PostJob({ profile, setMessage, loadPrivateData, setTab }) {
