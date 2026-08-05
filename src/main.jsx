@@ -315,7 +315,7 @@ function App() {
 )}
       {tab === "tradie-profile" && selectedTradie && <LazyTradieProfile tradie={selectedTradie} photos={photosFor(selectedTradie.id)} reviews={reviewsFor(selectedTradie.id)} avgRating={avgRating(selectedTradie.id)} setTab={setTab} setSelectedTradie={setSelectedTradie} />}
       {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
-      {tab === "book" && (session ? <Booking selectedTradie={selectedTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage}/>)}
+{tab === "book" && (session ? <Booking selectedTradie={selectedTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage} returnTab="book" />)}
       {tab === "post-job" && (session ? <PostJob profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage}/>)}
       {tab === "available-jobs" && ["tradesperson","tradie"].includes(profile?.role) && <AvailableJobs jobPosts={openJobPosts} myTradie={myTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}
       {tab === "quotes-sent" && ["tradesperson","tradie"].includes(profile?.role) && <QuotesSentPage myTradie={myTradie} quotes={quotes} jobPosts={jobPosts} setMessage={setMessage} loadPrivateData={loadPrivateData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}
@@ -537,8 +537,13 @@ function AboutUs({ setTab, profile }) {
 }
 
 
-function Auth({ setTab, setMessage, setAccountConfirmOpen }) {
-  const [mode, setMode] = useState("login");
+function Auth({
+  setTab,
+  setMessage,
+  setAccountConfirmOpen,
+  returnTab = "dashboard"
+}) {
+  const [mode, setMode] = useState("login");  
   const [signupStep, setSignupStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState("customer");
   const [authBusy, setAuthBusy] = useState(false);
@@ -562,7 +567,7 @@ function Auth({ setTab, setMessage, setAccountConfirmOpen }) {
       if (error) return setMessage(error.message);
 
       setMessage("Logged in.");
-      setTab("dashboard");
+      setTab(returnTab);
       return;
     }
 
@@ -604,7 +609,7 @@ function Auth({ setTab, setMessage, setAccountConfirmOpen }) {
       setAccountConfirmOpen?.(true);
       setTimeout(() => {
         setAccountConfirmOpen?.(false);
-        setTab("dashboard");
+        setTab(returnTab);
       }, 1400);
     }
   }
