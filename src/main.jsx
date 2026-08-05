@@ -814,9 +814,15 @@ function JobsBoard({ profile, tradespeople, jobPosts, myTradie, setSelectedTradi
 }
 
 
-function SmartOnboardingPanel({ profile, myTradie, setTab }) {
+function SmartOnboardingPanel({
+  profile,
+  myTradie,
+  customerJobs = [],
+  setTab
+}) {
   const isTradesperson = ["tradesperson","tradie"].includes(profile?.role);
   const displayName = profile?.full_name || profile?.email || "there";
+  const hasPostedJobs = customerJobs.length > 0;
 
   if (!profile) return null;
 
@@ -832,7 +838,7 @@ function SmartOnboardingPanel({ profile, myTradie, setTab }) {
         {!isTradesperson && <>
           <button className="smart-onboarding-card highlight" onClick={() => setTab("post-job")}>
             <PlusCircle size={24}/>
-            <strong>Post your first job</strong>
+            <strong>{hasPostedJobs ? "Post another job" : "Post your first job"}</strong>
             <span>Get quotes from available tradespeople.</span>
           </button>
 
@@ -967,7 +973,11 @@ function CustomerDashboard({ profile, setTab, posts, jobs, quotesFor, setSelecte
       badge={{ text: "Customer account", variant: "customer" }}
     />
     <p className="hint dashboard-hint">Welcome back — start with anything marked needs attention, then review open quotes and accepted work.</p>
-    <SmartOnboardingPanel profile={profile} setTab={setTab} />
+    <SmartOnboardingPanel
+  profile={profile}
+  customerJobs={posts}
+  setTab={setTab}
+/>
     <Stats
       activeKey={dashboardFocus}
       items={[
