@@ -15,6 +15,7 @@ import {
 import { COUNTIES, STOCK_IMAGES, TRADES } from "./constants";
 import { DashboardErrorBoundary, IdentityActionHeader, MessengerPopup, NotificationStrip } from "./components/dashboard/DashboardShellComponents";
 import "./styles.css";
+import SmartOnboardingPanel from "./components/dashboard/SmartOnboardingPanel";
 
 const MapView = lazy(() => import("./components/workspace/MapView"));
 const LazySearchPage = lazy(() => import("./components/workspace/SearchPage"));
@@ -813,75 +814,6 @@ function JobsBoard({ profile, tradespeople, jobPosts, myTradie, setSelectedTradi
   </section>;
 }
 
-
-function SmartOnboardingPanel({
-  profile,
-  myTradie,
-  customerJobs = [],
-  setTab
-}) {
-  const isTradesperson = ["tradesperson","tradie"].includes(profile?.role);
-  const displayName = profile?.full_name || profile?.email || "there";
-  const hasPostedJobs = customerJobs.length > 0;
-
-  if (!profile) return null;
-
-  return (
-    <section className="smart-onboarding-panel">
-      <div className="smart-onboarding-head">
-        <span className="label">Quick start</span>
-        <h2>Welcome, {displayName} 👋</h2>
-        <p>{isTradesperson ? "Finish your setup and start winning jobs faster." : "Start with the fastest path to getting your job sorted."}</p>
-      </div>
-
-      <div className="smart-onboarding-grid">
-        {!isTradesperson && <>
-          <button className="smart-onboarding-card highlight" onClick={() => setTab("post-job")}>
-            <PlusCircle size={24}/>
-            <strong>{hasPostedJobs ? "Post another job" : "Post your first job"}</strong>
-            <span>Get quotes from available tradespeople.</span>
-          </button>
-
-          <button className="smart-onboarding-card" onClick={() => setTab("map")}>
-            <Search size={24}/>
-            <strong>Find a tradesperson</strong>
-            <span>Browse profiles, reviews and portfolio photos.</span>
-          </button>
-
-          <button className="smart-onboarding-card" onClick={() => setTab("map")}>
-            <MapPinFallback/>
-            <strong>Open map view</strong>
-            <span>See available tradespeople near your area.</span>
-          </button>
-        </>}
-
-        {isTradesperson && <>
-          <button className={`smart-onboarding-card ${!myTradie ? "highlight" : ""}`} onClick={() => setTab("dashboard")}>
-            <Hammer size={24}/>
-            <strong>{myTradie ? "Update business profile" : "Complete business profile"}</strong>
-            <span>Add trade, county, certs and portfolio photos.</span>
-          </button>
-
-          <button className="smart-onboarding-card highlight" onClick={() => setTab("jobs-board")}>
-            <BriefcaseBusiness size={24}/>
-            <strong>View available jobs</strong>
-            <span>Filter by your trade and send quotes.</span>
-          </button>
-
-          <button className="smart-onboarding-card" onClick={() => setTab("quotes-sent")}>
-            <Euro size={24}/>
-            <strong>Quotes sent</strong>
-            <span>Track accepted, pending and cancelled quotes.</span>
-          </button>
-        </>}
-      </div>
-    </section>
-  );
-}
-
-function MapPinFallback() {
-  return <span className="map-pin-fallback">📍</span>;
-}
 
 function Dashboard({ profile, session, setMessage, loadProfile, loadPublicData, jobs, jobPosts, quotes, loadPrivateData, documents, myTradie, quotesFor, setSelectedJobPost, setTab }) {
   if (!profile) return <LoadingState title="Setting up your dashboard…" text="We are loading your account, jobs and recent activity."/>;
