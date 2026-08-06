@@ -3907,3 +3907,632 @@ img,svg,video,canvas{
   color:#9ca3af;
   font-size:.85rem;
 }
+/* =========================================================
+   Premium Visual System Refresh — Phase 1
+   Stronger hierarchy, surfaces, cards, forms and empty states
+========================================================= */
+
+:root{
+  --surface-page:#f5f1eb;
+  --surface-card:#ffffff;
+  --surface-soft:#fffaf5;
+  --surface-muted:#f8fafc;
+  --line-strong:#d9dde4;
+  --shadow-card:0 12px 32px rgba(15,23,42,.09);
+  --shadow-card-hover:0 20px 46px rgba(15,23,42,.14);
+  --shadow-section:0 18px 46px rgba(15,23,42,.08);
+}
+
+/* Stronger page depth */
+body{
+  background:
+    radial-gradient(circle at 8% 0%,rgba(249,115,22,.13),transparent 30%),
+    radial-gradient(circle at 92% 18%,rgba(251,146,60,.08),transparent 24%),
+    linear-gradient(180deg,#fffaf5 0%,var(--surface-page) 100%);
+}
+
+/* Major dashboard sections */
+.action-section{
+  position:relative;
+  overflow:hidden;
+  background:rgba(255,255,255,.94);
+  border:1px solid var(--line-strong);
+  border-radius:28px;
+  padding:24px;
+  box-shadow:var(--shadow-section);
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+.action-section::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:24px;
+  right:24px;
+  height:3px;
+  border-radius:0 0 999px 999px;
+  background:linear-gradient(
+    90deg,
+    var(--orange),
+    #fb923c,
+    transparent 85%
+  );
+}
+
+.action-section:hover{
+  border-color:#fdba74;
+  box-shadow:0 22px 52px rgba(15,23,42,.11);
+}
+
+/* Standard cards */
+.tight-card,
+.side-card,
+.panel,
+.tradie-card,
+.quote-card,
+.quote-job-card,
+.map-result-card,
+.submitted-review-card{
+  background:var(--surface-card);
+  border:1px solid var(--line-strong);
+  box-shadow:var(--shadow-card);
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+.tight-card:hover,
+.tradie-card:hover,
+.quote-card:hover,
+.quote-job-card:hover,
+.map-result-card:hover,
+.submitted-review-card:hover{
+  transform:translateY(-3px);
+  border-color:#fdba74;
+  box-shadow:var(--shadow-card-hover);
+}
+
+/* Side rail cards */
+.side-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:24px;
+  padding:22px;
+}
+
+.side-card::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:4px;
+  background:linear-gradient(
+    180deg,
+    var(--orange),
+    #fb923c 55%,
+    rgba(251,146,60,.15)
+  );
+}
+
+.side-card h3{
+  margin:-22px -22px 20px;
+  padding:18px 22px 16px 26px;
+  background:linear-gradient(
+    135deg,
+    #fff7ed,
+    #ffffff 75%
+  );
+  border-bottom:1px solid #fed7aa;
+}
+
+.side-card h3 svg{
+  color:var(--orange);
+}
+
+/* Dashboard stat cards */
+.stat{
+  position:relative;
+  overflow:hidden;
+  min-height:94px;
+  border:1px solid var(--line-strong);
+  box-shadow:var(--shadow-card);
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+.stat::after{
+  content:"";
+  position:absolute;
+  right:-24px;
+  bottom:-34px;
+  width:100px;
+  height:100px;
+  border-radius:999px;
+  background:rgba(249,115,22,.06);
+}
+
+.stat:hover{
+  transform:translateY(-3px);
+  border-color:#fdba74;
+  box-shadow:var(--shadow-card-hover);
+}
+
+.stat-ico{
+  box-shadow:inset 0 0 0 1px #fed7aa;
+}
+
+/* Smart onboarding */
+.smart-onboarding-panel{
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--line-strong);
+  box-shadow:var(--shadow-section);
+}
+
+.smart-onboarding-panel::after{
+  content:"";
+  position:absolute;
+  width:260px;
+  height:260px;
+  right:-120px;
+  top:-150px;
+  border-radius:999px;
+  background:rgba(249,115,22,.07);
+  pointer-events:none;
+}
+
+.smart-onboarding-card{
+  border:1px solid var(--line-strong);
+  box-shadow:0 8px 20px rgba(15,23,42,.05);
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+.smart-onboarding-card:hover{
+  transform:translateY(-3px);
+  border-color:#fb923c;
+  box-shadow:0 16px 34px rgba(15,23,42,.10);
+}
+
+/* Form controls */
+input,
+select,
+textarea{
+  min-height:48px;
+  border:1px solid #cbd2dc;
+  background:#fff;
+  box-shadow:inset 0 1px 2px rgba(15,23,42,.03);
+  transition:
+    border-color .16s ease,
+    box-shadow .16s ease,
+    background .16s ease;
+}
+
+textarea{
+  min-height:132px;
+  resize:vertical;
+}
+
+input:hover,
+select:hover,
+textarea:hover{
+  border-color:#9ca3af;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  border-color:var(--orange);
+  background:#fffdf9;
+  box-shadow:
+    0 0 0 4px rgba(249,115,22,.13),
+    0 8px 20px rgba(15,23,42,.05);
+}
+
+/* Buttons feel more deliberate */
+.primary,
+.secondary,
+.danger{
+  min-height:44px;
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    filter .16s ease;
+}
+
+.primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 30px rgba(249,115,22,.30);
+  filter:saturate(1.05);
+}
+
+.secondary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 14px 26px rgba(9,9,11,.20);
+}
+
+/* Empty states */
+.empty,
+.premium-empty,
+.premium-empty-state{
+  min-height:128px;
+  justify-content:center;
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% 15%,#fff7ed,transparent 45%),
+    #fff;
+  border:1px dashed #f5b782;
+  color:#475569;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.7);
+}
+
+.empty svg,
+.premium-empty svg,
+.premium-empty-state svg{
+  color:var(--orange);
+}
+
+/* Section headers */
+.section-title{
+  padding-bottom:16px;
+  border-bottom:1px solid #e8ebef;
+}
+
+.section-title h2{
+  color:#0f172a;
+}
+
+.section-ico{
+  box-shadow:
+    0 10px 24px rgba(9,9,11,.18),
+    inset 0 0 0 1px rgba(255,255,255,.08);
+}
+
+/* Active filters */
+.active-filter-strip{
+  border:1px solid #fdba74;
+  background:linear-gradient(135deg,#fff7ed,#ffffff);
+  box-shadow:0 10px 26px rgba(249,115,22,.10);
+}
+
+/* Better separation between dashboard columns */
+.main-feed{
+  gap:28px;
+}
+
+.side-rail{
+  min-width:0;
+}
+
+/* Keyboard accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline:3px solid rgba(249,115,22,.38);
+  outline-offset:3px;
+}
+
+/* Mobile restraint */
+@media(max-width:760px){
+  .action-section{
+    padding:18px;
+    border-radius:22px;
+  }
+
+  .side-card{
+    padding:18px;
+  }
+
+  .side-card h3{
+    margin:-18px -18px 18px;
+    padding:16px 18px 14px 22px;
+  }
+
+  .tight-card:hover,
+  .tradie-card:hover,
+  .quote-card:hover,
+  .quote-job-card:hover,
+  .map-result-card:hover,
+  .submitted-review-card:hover,
+  .stat:hover,
+  .smart-onboarding-card:hover{
+    transform:none;
+  }
+}
+/* =========================================================
+   Premium Visual System Refresh — Phase 2
+   Stronger surface separation and reduced blank-page feeling
+========================================================= */
+
+/* Main dashboard columns sit on visibly different surfaces */
+.main-feed{
+  padding:4px;
+  border-radius:30px;
+}
+
+.side-rail{
+  padding:4px;
+  border-radius:30px;
+}
+
+/* Section containers use a soft tinted shell */
+.action-section{
+  background:
+    linear-gradient(180deg,#f8fafc 0%,#f3f4f6 100%);
+  border-color:#d7dce3;
+}
+
+/* White cards now sit clearly inside tinted sections */
+.action-section .tight-card,
+.action-section .quote-card,
+.action-section .quote-job-card,
+.action-section .empty,
+.action-section .premium-empty,
+.action-section .premium-empty-state{
+  background:#ffffff;
+}
+
+/* Alternate section tinting for easier scanning */
+.main-feed .action-section:nth-child(odd){
+  background:
+    linear-gradient(180deg,#fffaf5 0%,#fff7ed 100%);
+}
+
+.main-feed .action-section:nth-child(even){
+  background:
+    linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);
+}
+
+/* Side rail feels like a distinct workspace */
+.side-rail .side-card{
+  background:
+    linear-gradient(180deg,#ffffff 0%,#fafafa 100%);
+  border-color:#d5dae2;
+}
+
+.side-rail .side-card:nth-child(2){
+  background:
+    linear-gradient(180deg,#fffaf5 0%,#fff7ed 100%);
+}
+
+.side-rail .side-card:nth-child(3){
+  background:
+    linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);
+}
+
+/* More visual definition inside long forms */
+.side-card .field{
+  padding:10px 12px;
+  margin-bottom:10px;
+  border:1px solid #e3e7ed;
+  border-radius:16px;
+  background:rgba(255,255,255,.8);
+}
+
+.side-card .field span{
+  color:#334155;
+}
+
+.side-card .check-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:13px 14px;
+  margin:10px 0 14px;
+  border:1px solid #e3e7ed;
+  border-radius:16px;
+  background:#fff;
+}
+
+.side-card .check-row input{
+  width:auto;
+  min-height:auto;
+}
+
+/* Portfolio and verification areas become defined sub-panels */
+.portfolio-upload,
+.doc-list{
+  margin-top:16px;
+  padding:16px;
+  border:1px solid #dce1e8;
+  border-radius:18px;
+  background:rgba(255,255,255,.82);
+}
+
+.doc-row{
+  background:#fff;
+  border:1px solid #dce1e8;
+  border-radius:14px;
+  padding:12px;
+}
+
+/* Empty states become tighter and less visually wasteful */
+.empty,
+.premium-empty,
+.premium-empty-state{
+  min-height:104px;
+  padding:22px 18px;
+  background:
+    linear-gradient(135deg,#fff7ed 0%,#ffffff 70%);
+  border:1px dashed #fb923c;
+}
+
+/* Job conversation gets stronger separation */
+.chat-layout{
+  gap:28px;
+}
+
+.messages{
+  background:
+    linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);
+  border-color:#cfd6df;
+}
+
+.msg{
+  box-shadow:0 6px 16px rgba(15,23,42,.07);
+}
+
+.msg.mine{
+  background:
+    linear-gradient(135deg,#fff7ed,#ffedd5);
+  border-color:#fb923c;
+}
+
+/* Timeline card stands apart */
+.timeline-card,
+.job-timeline,
+.timeline-panel{
+  background:
+    linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+  border-color:#d2d8e1;
+  box-shadow:var(--shadow-card);
+}
+
+/* Quote workspace */
+.quote-form,
+.quote-panel,
+.job-detail-card{
+  background:
+    linear-gradient(180deg,#ffffff 0%,#fafafa 100%);
+  border-color:#d6dbe3;
+}
+
+/* Stronger section title band */
+.section-title{
+  margin:-4px -4px 18px;
+  padding:14px 16px 16px;
+  border-radius:18px 18px 12px 12px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(255,255,255,.9);
+  border-bottom-color:#d7dce3;
+}
+
+/* Prevent giant blank cards from feeling empty */
+.action-section > .empty:only-child,
+.action-section > .premium-empty:only-child,
+.action-section > .premium-empty-state:only-child{
+  margin-top:4px;
+}
+
+/* Desktop: subtle visual divider between main and side rail */
+@media(min-width:901px){
+  .action-layout{
+    position:relative;
+  }
+
+  .action-layout::after{
+    content:"";
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:calc(64% + 10px);
+    width:1px;
+    background:linear-gradient(
+      180deg,
+      transparent,
+      #d7dce3 12%,
+      #d7dce3 88%,
+      transparent
+    );
+    pointer-events:none;
+  }
+}
+
+/* Mobile stays calm and uncluttered */
+@media(max-width:900px){
+  .main-feed,
+  .side-rail{
+    padding:0;
+  }
+
+  .action-layout::after{
+    display:none;
+  }
+
+  .side-card .field{
+    padding:8px 10px;
+  }
+}
+/* =========================================================
+   Premium Visual System Refresh — Phase 3
+   Cooler neutral application background
+========================================================= */
+
+:root{
+  --surface-page:#f3f4f6;
+  --surface-soft:#f8fafc;
+}
+
+body{
+  background:
+    radial-gradient(
+      circle at 8% 0%,
+      rgba(249,115,22,.08),
+      transparent 26%
+    ),
+    linear-gradient(
+      180deg,
+      #f8fafc 0%,
+      var(--surface-page) 100%
+    );
+}
+
+.container{
+  background:transparent;
+}
+
+.action-section{
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fafc 100%
+    );
+}
+
+.main-feed .action-section:nth-child(odd){
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fafc 100%
+    );
+}
+
+.main-feed .action-section:nth-child(even){
+  background:
+    linear-gradient(
+      180deg,
+      #f8fafc 0%,
+      #f1f5f9 100%
+    );
+}
+
+.smart-onboarding-panel{
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fafc 100%
+    );
+}
+
+.side-rail .side-card,
+.side-rail .side-card:nth-child(2),
+.side-rail .side-card:nth-child(3){
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fafc 100%
+    );
+}

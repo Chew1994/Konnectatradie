@@ -23,8 +23,10 @@ import {
   VerificationUpload
 } from "./components/dashboard/TradieDashboardForms.jsx";
 import "./styles.css";
+import "./theme.css";
 import SmartOnboardingPanel from "./components/dashboard/SmartOnboardingPanel";
 import TradieDashboard from "./components/dashboard/TradieDashboard";
+import ConversationsPage from "./components/chat/ConversationsPage";
 
 const MapView = lazy(() => import("./components/workspace/MapView"));
 const LazySearchPage = lazy(() => import("./components/workspace/SearchPage"));
@@ -279,6 +281,12 @@ function App() {
       <div className="nav-links" id="primary-navigation">
         <button onClick={() => goTab("search")}>Find a Tradie</button>
         {session && <button onClick={() => goTab("dashboard")}>Dashboard</button>}
+        {session && (
+  <button onClick={() => goTab("messages")}>
+    <MessageCircle size={16} />
+    Messages
+  </button>
+)}
         {session && profile?.role === "customer" && <button onClick={() => goTab("map")}>Map</button>}
         {session && ["tradesperson","tradie"].includes(profile?.role) && <button onClick={() => goTab("jobs-board")}>Jobs Board</button>}
         {session && profile?.role === "customer" && <button onClick={() => goTab("post-job")}>Post a Job</button>}
@@ -325,6 +333,15 @@ function App() {
 )}
       {tab === "tradie-profile" && selectedTradie && <LazyTradieProfile tradie={selectedTradie} photos={photosFor(selectedTradie.id)} reviews={reviewsFor(selectedTradie.id)} avgRating={avgRating(selectedTradie.id)} setTab={setTab} setSelectedTradie={setSelectedTradie} />}
       {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
+      {tab === "messages" && session && (
+  <ConversationsPage
+    profile={profile}
+    messages={messages}
+    jobPosts={jobPosts}
+    onOpenConversation={openJobWorkspace}
+    onBack={() => goTab("dashboard")}
+  />
+)}
 {tab === "book" && (session ? <Booking selectedTradie={selectedTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage} returnTab="book" />)}
       {tab === "post-job" && (session ? <PostJob profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage}/>)}
       {tab === "available-jobs" && ["tradesperson","tradie"].includes(profile?.role) && <AvailableJobs jobPosts={openJobPosts} myTradie={myTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}
