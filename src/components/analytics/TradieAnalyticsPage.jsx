@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import QuoteAgeingPanel from "./QuoteAgeingPanel";
+import BusinessCoachPanel from "./BusinessCoachPanel";
 import {
   Activity,
   Award,
@@ -1364,11 +1365,17 @@ const likelyRevenue =
             </p>
           </div>
         )}
-              <QuoteAgeingPanel
+                  <QuoteAgeingPanel
         pendingQuotes={analytics.pendingQuotes}
         jobPosts={jobPosts}
         onOpenJob={onOpenJob}
         onViewQuotes={onViewQuotes}
+      />
+
+      <BusinessCoachPanel
+        analytics={analytics}
+        onViewQuotes={onViewQuotes}
+        onOpenDashboard={onBack}
       />
       </section>
 
