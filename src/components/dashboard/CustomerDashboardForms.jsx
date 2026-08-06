@@ -69,6 +69,9 @@ export function ReviewForm({
   loadPublicData
 }) {
   const [tradies, setTradies] = useState([]);
+  const [selectedTradieId, setSelectedTradieId] = useState("");
+const [rating, setRating] = useState("");
+const [comment, setComment] = useState("");
 
   useEffect(() => {
     supabase
@@ -79,7 +82,7 @@ export function ReviewForm({
 
   async function submit(event) {
     event.preventDefault();
-
+    
     const form = new FormData(event.currentTarget);
 
     const { error } = await supabase.from("reviews").insert({
@@ -94,10 +97,12 @@ export function ReviewForm({
       return;
     }
 
-    setMessage("Review added.");
-    event.currentTarget.reset();
-    loadPublicData();
-  }
+setMessage("Review added.");
+setSelectedTradieId("");
+setRating("");
+setComment("");
+loadPublicData();
+}
 
   return (
     <form className="side-card" onSubmit={submit}>
@@ -106,28 +111,34 @@ export function ReviewForm({
         Add a review
       </h3>
 
-      <Select
-        label="Tradesperson"
-        name="tradesperson_id"
-        options={tradies.map((tradie) => ({
-          label: tradie.business_name,
-          value: tradie.id
-        }))}
-        required
-      />
+<Select
+  label="Tradesperson"
+  name="tradesperson_id"
+  value={selectedTradieId}
+  onChange={(event) => setSelectedTradieId(event.target.value)}
+  options={tradies.map((tradie) => ({
+    label: tradie.business_name,
+    value: tradie.id
+  }))}
+  required
+/>
 
-      <Select
-        label="Rating"
-        name="rating"
-        options={["5", "4", "3", "2", "1"]}
-        required
-      />
+<Select
+  label="Rating"
+  name="rating"
+  value={rating}
+  onChange={(event) => setRating(event.target.value)}
+  options={["5", "4", "3", "2", "1"]}
+  required
+/>
 
-      <Textarea
-        label="Comment"
-        name="comment"
-        required
-      />
+<Textarea
+  label="Comment"
+  name="comment"
+  value={comment}
+  onChange={(event) => setComment(event.target.value)}
+  required
+/>
 
       <button className="primary">Submit review</button>
     </form>
