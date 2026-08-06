@@ -381,10 +381,41 @@ export default function TradieDashboard({
         }}
       />
 
-      <p className="hint dashboard-hint">
-        Welcome back — click a stat card to jump straight to
-        the work that needs action.
-      </p>
+<p className="hint dashboard-hint">
+  Welcome back — click a stat card to jump straight to
+  the work that needs action.
+</p>
+
+<section className="dashboard-summary-card">
+  <div>
+    <span className="label">Today's overview</span>
+
+    <h2>
+      {pendingJobs.length > 0
+        ? `${pendingJobs.length} job${
+            pendingJobs.length === 1 ? "" : "s"
+          } waiting for you`
+        : "You're all caught up"}
+    </h2>
+
+    <p>
+      {acceptedCount} active job
+      {acceptedCount === 1 ? "" : "s"} ·{" "}
+      {openQuotes.length} open quote
+      {openQuotes.length === 1 ? "" : "s"} ·{" "}
+      {completedCount} completed
+    </p>
+  </div>
+
+  <button
+    className="primary"
+    onClick={() => applyDashboardFocus("needs_attention")}
+  >
+    Review priority work
+  </button>
+</section>
+
+
 
       <SmartOnboardingPanel
         profile={profile}
@@ -395,34 +426,44 @@ export default function TradieDashboard({
       <Stats
         activeKey={dashboardFocus}
         items={[
-          [
-            "Needs attention",
-            pendingJobs.length || 0,
-            <AlertTriangle />,
-            () => applyDashboardFocus("needs_attention"),
-            "needs_attention"
-          ],
-          [
-            "Accepted",
-            acceptedCount || 0,
-            <CheckCircle />,
-            () => applyDashboardFocus("accepted"),
-            "accepted"
-          ],
-          [
-            "Open quotes",
-            openQuotes.length || 0,
-            <Euro />,
-            () => applyDashboardFocus("open_quotes"),
-            "open_quotes"
-          ],
-          [
-            "Completed",
-            completedCount || 0,
-            <ClipboardCheck />,
-            () => applyDashboardFocus("completed"),
-            "completed"
-          ]
+[
+  "Needs attention",
+  pendingJobs.length || 0,
+  <AlertTriangle />,
+  () =>
+    applyDashboardFocus(
+      "needs_attention"
+    ),
+  "needs_attention",
+  "warning"
+],
+[
+  "Accepted",
+  acceptedCount || 0,
+  <CheckCircle />,
+  () =>
+    applyDashboardFocus("accepted"),
+  "accepted",
+  "success"
+],
+[
+  "Open quotes",
+  openQuotes.length || 0,
+  <Euro />,
+  () =>
+    applyDashboardFocus("open_quotes"),
+  "open_quotes",
+  "info"
+],
+[
+  "Completed",
+  completedCount || 0,
+  <ClipboardCheck />,
+  () =>
+    applyDashboardFocus("completed"),
+  "completed",
+  "complete"
+]
         ]}
       />
 

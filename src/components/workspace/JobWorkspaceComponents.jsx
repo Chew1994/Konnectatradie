@@ -7,22 +7,57 @@ function ActionHeader({ title, subtitle, primary, secondary, onPrimary, onSecond
 }
 
 function Stats({ items, activeKey }) {
-  return <div className="stats">{items.map((item) => {
-    const [label, value, icon, onClick, key] = item;
-    const clickable = typeof onClick === "function";
-    const active = activeKey && key === activeKey;
+  return (
+    <div className="stats">
+      {items.map((item) => {
+        const [
+          label,
+          value,
+          icon,
+          onClick,
+          key,
+          tone = "neutral"
+        ] = item;
 
-    return <button
-      type="button"
-      className={`stat ${clickable ? "stat-clickable" : ""} ${active ? "stat-active" : ""}`}
-      key={label}
-      onClick={clickable ? onClick : undefined}
-      disabled={!clickable}
-    >
-      <div className="stat-ico">{icon}</div>
-      <div><strong>{value}</strong><span>{label}</span></div>
-    </button>;
-  })}</div>;
+        const clickable =
+          typeof onClick === "function";
+
+        const active =
+          activeKey && key === activeKey;
+
+        return (
+          <button
+            type="button"
+            className={[
+              "stat",
+              clickable ? "stat-clickable" : "",
+              active ? "stat-active" : "",
+              `stat-${tone}`,
+              Number(value) > 0
+                ? "stat-has-value"
+                : "stat-empty"
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            key={label}
+            onClick={
+              clickable ? onClick : undefined
+            }
+            disabled={!clickable}
+          >
+            <div className="stat-ico">
+              {icon}
+            </div>
+
+            <div>
+              <strong>{value}</strong>
+              <span>{label}</span>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 function ActionSection({ icon, title, subtitle, filter, children }) {
