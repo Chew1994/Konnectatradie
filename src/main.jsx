@@ -92,6 +92,7 @@ function App() {
   const [filters, setFilters] = useState({ trade: "", county: "" });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
@@ -359,8 +360,10 @@ function App() {
       jobPosts={jobPosts}
       jobs={jobs}
       reviews={reviews}
+      messages={messages}
       onBack={() => goTab("dashboard")}
       onViewQuotes={() => goTab("quotes-sent")}
+            onOpenJob={openJobWorkspace}
     />
   )}
 {tab === "book" && (session ? <Booking selectedTradie={selectedTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage} returnTab="book" />)}

@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import QuoteAgeingPanel from "./QuoteAgeingPanel";
 import {
   Activity,
   Award,
@@ -336,7 +337,8 @@ export default function TradieAnalyticsPage({
   reviews = [],
   messages = [],
   onBack,
-  onViewQuotes
+  onViewQuotes,
+  onOpenJob
 }) {
   const analytics = useMemo(() => {
     const safeQuotes = safeArray(quotes);
@@ -1362,6 +1364,12 @@ const likelyRevenue =
             </p>
           </div>
         )}
+              <QuoteAgeingPanel
+        pendingQuotes={analytics.pendingQuotes}
+        jobPosts={jobPosts}
+        onOpenJob={onOpenJob}
+        onViewQuotes={onViewQuotes}
+      />
       </section>
 
       <div className="analytics-metric-grid">
