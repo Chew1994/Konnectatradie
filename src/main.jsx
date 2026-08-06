@@ -3,7 +3,8 @@ import { createRoot } from "react-dom/client";
 import {
   Hammer, Search, ShieldCheck, Star, LogOut, ArrowRight, BadgeCheck, Wrench,
   Home as HomeIcon, ClipboardCheck, CheckCircle, XCircle, Clock, MessageCircle,
-  Euro, Send, BriefcaseBusiness, PlusCircle, Inbox, AlertTriangle, Zap, Menu, X, Info, Bell
+  Euro, Send, BriefcaseBusiness, PlusCircle, Inbox, AlertTriangle, Zap, Menu,
+  X, Info, Bell, BarChart3
 } from "lucide-react";
 import { Input, Select, Textarea } from "./components/common/FormControls";
 import { supabase } from "./lib/supabase";
@@ -27,6 +28,7 @@ import "./theme.css";
 import SmartOnboardingPanel from "./components/dashboard/SmartOnboardingPanel";
 import TradieDashboard from "./components/dashboard/TradieDashboard";
 import ConversationsPage from "./components/chat/ConversationsPage";
+import TradieAnalyticsPage from "./components/analytics/TradieAnalyticsPage";
 
 const MapView = lazy(() => import("./components/workspace/MapView"));
 const LazySearchPage = lazy(() => import("./components/workspace/SearchPage"));
@@ -287,6 +289,12 @@ function App() {
     Messages
   </button>
 )}
+{session && ["tradesperson", "tradie"].includes(profile?.role) && (
+  <button onClick={() => goTab("analytics")}>
+    <BarChart3 size={16} />
+    Analytics
+  </button>
+)}
         {session && profile?.role === "customer" && <button onClick={() => goTab("map")}>Map</button>}
         {session && ["tradesperson","tradie"].includes(profile?.role) && <button onClick={() => goTab("jobs-board")}>Jobs Board</button>}
         {session && profile?.role === "customer" && <button onClick={() => goTab("post-job")}>Post a Job</button>}
@@ -342,6 +350,19 @@ function App() {
     onBack={() => goTab("dashboard")}
   />
 )}
+{tab === "analytics" &&
+  session &&
+  ["tradesperson", "tradie"].includes(profile?.role) && (
+    <TradieAnalyticsPage
+      myTradie={myTradie}
+      quotes={quotes}
+      jobPosts={jobPosts}
+      jobs={jobs}
+      reviews={reviews}
+      onBack={() => goTab("dashboard")}
+      onViewQuotes={() => goTab("quotes-sent")}
+    />
+  )}
 {tab === "book" && (session ? <Booking selectedTradie={selectedTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage} returnTab="book" />)}
       {tab === "post-job" && (session ? <PostJob profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage}/>)}
       {tab === "available-jobs" && ["tradesperson","tradie"].includes(profile?.role) && <AvailableJobs jobPosts={openJobPosts} myTradie={myTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}

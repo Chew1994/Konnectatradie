@@ -1309,3 +1309,763 @@ input[type="file"]::file-selector-button:hover{
     transform:none;
   }
 }
+
+/* =========================================================
+   Tradie Analytics — Phase 1
+========================================================= */
+
+.tradie-analytics-page{
+  display:grid;
+  gap:24px;
+}
+
+.analytics-page-header{
+  margin-bottom:0;
+}
+
+.analytics-header-actions{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:12px;
+}
+
+.analytics-no-profile{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:20px;
+  border:1px solid rgba(59,130,246,.38);
+  border-radius:20px;
+  color:#bfdbfe;
+  background:rgba(59,130,246,.10);
+}
+
+.analytics-no-profile svg{
+  flex:0 0 auto;
+}
+
+.analytics-no-profile h2,
+.analytics-no-profile p{
+  margin:0;
+}
+
+.analytics-no-profile p{
+  margin-top:4px;
+  color:#93c5fd !important;
+}
+
+.analytics-health-card{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:24px;
+  padding:26px;
+  overflow:hidden;
+  border:1px solid var(--kt-border);
+  border-radius:26px;
+  color:var(--kt-text);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(249,115,22,.16), transparent 32%),
+    linear-gradient(180deg,#343b45,#292f37);
+  box-shadow:var(--kt-shadow);
+}
+
+.analytics-health-card > div:first-child{
+  max-width:680px;
+}
+
+.analytics-health-card > div:first-child > strong{
+  display:block;
+  margin-top:5px;
+  font-size:54px;
+  line-height:1;
+  letter-spacing:-.06em;
+}
+
+.analytics-health-card p{
+  margin:10px 0 0;
+  color:var(--kt-text-secondary)!important;
+}
+
+.analytics-health-ring{
+  width:132px;
+  height:132px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border-radius:999px;
+  background:conic-gradient(var(--kt-orange) 0deg,var(--kt-orange-bright) var(--analytics-progress,#000 0deg),#1c2229 var(--analytics-progress,#000 0deg),#1c2229 360deg);
+}
+
+.analytics-health-ring span{
+  width:96px;
+  height:96px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:#252b33;
+  color:var(--kt-text);
+  font-size:24px;
+  font-weight:900;
+}
+
+.analytics-metric-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+
+.analytics-metric{
+  display:flex;
+  gap:15px;
+  padding:20px;
+  border-radius:20px;
+  border:1px solid var(--kt-border);
+  background:linear-gradient(180deg,#343b45,#2a3038);
+}
+
+.analytics-metric-icon{
+  width:52px;
+  height:52px;
+  display:grid;
+  place-items:center;
+  border-radius:16px;
+  background:rgba(249,115,22,.13);
+  border:1px solid rgba(249,115,22,.34);
+  color:var(--kt-orange-bright);
+}
+
+.analytics-metric strong{
+  display:block;
+  font-size:28px;
+}
+
+.analytics-metric span{
+  color:var(--kt-text-secondary);
+}
+
+.analytics-metric small{
+  display:block;
+  margin-top:6px;
+  color:var(--kt-text-muted);
+}
+
+.analytics-two-column{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:20px;
+}
+
+.analytics-panel,
+.analytics-insights-panel{
+  padding:22px;
+  border-radius:22px;
+  border:1px solid var(--kt-border);
+  background:linear-gradient(180deg,#323944,#282e36);
+}
+
+.analytics-panel-heading{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.analytics-panel-icon{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:15px;
+  background:#1b2026;
+  color:var(--kt-orange-bright);
+}
+
+.analytics-bars,
+.analytics-outcomes{
+  display:grid;
+  gap:16px;
+}
+
+.analytics-bar-row,
+.analytics-outcome-row{
+  display:grid;
+  gap:8px;
+}
+
+.analytics-bar-label,
+.analytics-outcome-row>div:first-child{
+  display:flex;
+  justify-content:space-between;
+}
+
+.analytics-bar-track,
+.analytics-outcome-track{
+  height:10px;
+  border-radius:999px;
+  background:#1b2026;
+  overflow:hidden;
+}
+
+.analytics-bar-track span,
+.analytics-outcome-track span{
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,var(--kt-orange),var(--kt-orange-bright));
+}
+
+.analytics-value-list{
+  display:grid;
+  gap:12px;
+}
+
+.analytics-value-list>div{
+  display:flex;
+  justify-content:space-between;
+  padding:15px;
+  border-radius:14px;
+  background:#232931;
+}
+
+.analytics-insight-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+}
+
+.analytics-insight-grid article{
+  padding:18px;
+  border-radius:18px;
+  background:#232931;
+  display:grid;
+  gap:8px;
+}
+
+.analytics-review-summary{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:24px;
+  border-radius:24px;
+  border:1px solid rgba(249,115,22,.35);
+  background:
+    radial-gradient(circle at 100% 50%,rgba(249,115,22,.14),transparent 30%),
+    linear-gradient(180deg,#302f32,#252a30);
+}
+
+.analytics-review-icon{
+  width:62px;
+  height:62px;
+  display:grid;
+  place-items:center;
+  border-radius:18px;
+  background:rgba(249,115,22,.13);
+  color:var(--kt-orange-bright);
+}
+
+@media(max-width:1050px){
+  .analytics-metric-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .analytics-insight-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:760px){
+  .analytics-health-card,
+  .analytics-review-summary{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .analytics-two-column,
+  .analytics-metric-grid,
+  .analytics-insight-grid{
+    grid-template-columns:1fr;
+  }
+
+  .analytics-header-actions{
+    width:100%;
+  }
+
+  .analytics-header-actions button{
+    flex:1;
+  }
+}
+/* =========================================================
+   Tradie Analytics — Phase 2 Extensions
+========================================================= */
+
+/* Conversion funnel */
+.analytics-funnel{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+}
+
+.analytics-funnel-step{
+  min-width:0;
+  padding:18px;
+  border:1px solid var(--kt-border-soft);
+  border-radius:18px;
+  background:#232931;
+}
+
+.analytics-funnel-heading{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.analytics-funnel-heading span{
+  color:var(--kt-text-secondary);
+  font-weight:850;
+}
+
+.analytics-funnel-heading strong{
+  font-size:24px;
+}
+
+.analytics-funnel-track{
+  height:12px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#171b20;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.4);
+}
+
+.analytics-funnel-track span{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:
+    linear-gradient(
+      90deg,
+      var(--kt-orange),
+      var(--kt-orange-bright)
+    );
+  transition:width .4s ease;
+}
+
+.analytics-funnel-step small{
+  display:block;
+  margin-top:11px;
+  color:var(--kt-text-muted);
+  font-weight:700;
+  line-height:1.4;
+}
+
+/* Business score factors */
+.analytics-score-grid{
+  display:grid;
+  gap:16px;
+}
+
+.analytics-score-factor{
+  padding:15px 16px;
+  border:1px solid var(--kt-border-soft);
+  border-radius:17px;
+  background:#232931;
+}
+
+.analytics-score-factor > div:first-child{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:10px;
+}
+
+.analytics-score-factor span{
+  color:var(--kt-text-secondary);
+  font-weight:850;
+}
+
+.analytics-score-factor strong{
+  font-size:17px;
+}
+
+.analytics-score-track{
+  height:9px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#171b20;
+}
+
+.analytics-score-track span{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:
+    linear-gradient(
+      90deg,
+      var(--kt-orange),
+      var(--kt-orange-bright)
+    );
+}
+
+.analytics-score-success{
+  background:
+    linear-gradient(
+      90deg,
+      #16a34a,
+      #4ade80
+    ) !important;
+}
+
+.analytics-score-info{
+  background:
+    linear-gradient(
+      90deg,
+      #2563eb,
+      #60a5fa
+    ) !important;
+}
+
+.analytics-score-warning{
+  background:
+    linear-gradient(
+      90deg,
+      #d97706,
+      #fbbf24
+    ) !important;
+}
+
+.analytics-score-purple{
+  background:
+    linear-gradient(
+      90deg,
+      #7c3aed,
+      #c084fc
+    ) !important;
+}
+
+.analytics-score-factor small{
+  display:block;
+  margin-top:9px;
+  color:var(--kt-text-muted);
+  font-weight:700;
+  line-height:1.4;
+}
+
+/* Business recommendations */
+.analytics-recommendation-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+
+.analytics-recommendation{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  min-width:0;
+  padding:18px;
+  border:1px solid var(--kt-border-soft);
+  border-radius:18px;
+  background:#232931;
+}
+
+.analytics-recommendation-icon{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border-radius:14px;
+  color:#93c5fd;
+  background:rgba(59,130,246,.12);
+  border:1px solid rgba(59,130,246,.30);
+}
+
+.analytics-recommendation strong{
+  display:block;
+  font-size:17px;
+}
+
+.analytics-recommendation p{
+  margin:6px 0 0;
+  color:var(--kt-text-secondary) !important;
+  line-height:1.45;
+}
+
+.analytics-recommendation-success{
+  border-color:rgba(34,197,94,.30);
+}
+
+.analytics-recommendation-success .analytics-recommendation-icon{
+  color:#86efac;
+  background:rgba(34,197,94,.12);
+  border-color:rgba(34,197,94,.30);
+}
+
+.analytics-recommendation-warning{
+  border-color:rgba(245,158,11,.30);
+}
+
+.analytics-recommendation-warning .analytics-recommendation-icon{
+  color:#fcd34d;
+  background:rgba(245,158,11,.12);
+  border-color:rgba(245,158,11,.30);
+}
+
+.analytics-recommendation-danger{
+  border-color:rgba(239,68,68,.30);
+}
+
+.analytics-recommendation-danger .analytics-recommendation-icon{
+  color:#fca5a5;
+  background:rgba(239,68,68,.12);
+  border-color:rgba(239,68,68,.30);
+}
+
+/* Achievements */
+.analytics-achievement-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+}
+
+.analytics-achievement{
+  display:grid;
+  align-content:start;
+  gap:9px;
+  min-width:0;
+  padding:18px;
+  border:1px solid var(--kt-border-soft);
+  border-radius:18px;
+  background:#20262d;
+  opacity:.65;
+}
+
+.analytics-achievement.unlocked{
+  opacity:1;
+  border-color:rgba(249,115,22,.38);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(249,115,22,.12),
+      transparent 42%
+    ),
+    #252b33;
+}
+
+.analytics-achievement-icon{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  margin-bottom:4px;
+  border-radius:14px;
+  color:var(--kt-text-muted);
+  background:#171b20;
+  border:1px solid var(--kt-border-soft);
+}
+
+.analytics-achievement.unlocked .analytics-achievement-icon{
+  color:var(--kt-orange-bright);
+  background:rgba(249,115,22,.13);
+  border-color:rgba(249,115,22,.34);
+}
+
+.analytics-achievement strong{
+  font-size:17px;
+}
+
+.analytics-achievement p{
+  margin:0;
+  min-height:42px;
+  color:var(--kt-text-secondary) !important;
+  line-height:1.4;
+}
+
+.analytics-achievement-track{
+  height:8px;
+  overflow:hidden;
+  margin-top:4px;
+  border-radius:999px;
+  background:#171b20;
+}
+
+.analytics-achievement-track span{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:
+    linear-gradient(
+      90deg,
+      var(--kt-orange),
+      var(--kt-orange-bright)
+    );
+}
+
+.analytics-achievement small{
+  color:var(--kt-text-muted);
+  font-weight:800;
+}
+
+/* Larger activity summary */
+.analytics-insight-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+
+/* Better spacing for expanded analytics */
+.analytics-funnel-panel,
+.analytics-insights-panel{
+  overflow:hidden;
+}
+
+@media(max-width:1100px){
+  .analytics-funnel{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .analytics-achievement-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:760px){
+  .analytics-funnel,
+  .analytics-recommendation-grid,
+  .analytics-achievement-grid{
+    grid-template-columns:1fr;
+  }
+
+  .analytics-funnel-step,
+  .analytics-recommendation,
+  .analytics-achievement{
+    padding:16px;
+  }
+
+  .analytics-achievement p{
+    min-height:auto;
+  }
+}
+/* =========================================================
+   Tradie Analytics — Revenue Forecast
+========================================================= */
+
+.analytics-revenue-forecast{
+  overflow:hidden;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(249,115,22,.13),
+      transparent 34%
+    ),
+    linear-gradient(180deg,#343b45,#292f37);
+}
+
+.analytics-forecast-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;
+}
+
+.analytics-forecast-grid article{
+  min-width:0;
+  padding:18px;
+  border:1px solid var(--kt-border-soft);
+  border-radius:18px;
+  background:#232931;
+}
+
+.analytics-forecast-grid span{
+  display:block;
+  color:var(--kt-text-secondary);
+  font-weight:850;
+}
+
+.analytics-forecast-grid strong{
+  display:block;
+  margin-top:8px;
+  color:var(--kt-text);
+  font-size:28px;
+  line-height:1;
+  letter-spacing:-.04em;
+}
+
+.analytics-forecast-grid small{
+  display:block;
+  margin-top:9px;
+  color:var(--kt-text-muted);
+  font-weight:700;
+  line-height:1.4;
+}
+
+.analytics-forecast-grid article:nth-child(1){
+  border-color:rgba(34,197,94,.28);
+}
+
+.analytics-forecast-grid article:nth-child(1) strong{
+  color:#86efac;
+}
+
+.analytics-forecast-grid article:nth-child(2){
+  border-color:rgba(59,130,246,.30);
+}
+
+.analytics-forecast-grid article:nth-child(2) strong{
+  color:#93c5fd;
+}
+
+.analytics-forecast-grid article:nth-child(3){
+  border-color:rgba(245,158,11,.30);
+}
+
+.analytics-forecast-grid article:nth-child(3) strong{
+  color:#fcd34d;
+}
+
+.analytics-forecast-grid article:nth-child(4){
+  border-color:rgba(239,68,68,.30);
+}
+
+.analytics-forecast-grid article:nth-child(4) strong{
+  color:#fca5a5;
+}
+
+.analytics-forecast-note{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  margin-top:16px;
+  padding:15px 16px;
+  border:1px solid rgba(59,130,246,.30);
+  border-radius:16px;
+  color:#bfdbfe;
+  background:rgba(59,130,246,.10);
+}
+
+.analytics-forecast-note svg{
+  flex:0 0 auto;
+  margin-top:1px;
+}
+
+.analytics-forecast-note p{
+  margin:0;
+  color:#bfdbfe !important;
+  line-height:1.45;
+}
+
+@media(max-width:1050px){
+  .analytics-forecast-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:760px){
+  .analytics-forecast-grid{
+    grid-template-columns:1fr;
+  }
+
+  .analytics-forecast-grid article{
+    padding:16px;
+  }
+}
