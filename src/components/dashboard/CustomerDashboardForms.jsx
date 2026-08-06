@@ -71,14 +71,23 @@ export function ReviewForm({
   const [tradies, setTradies] = useState([]);
   const [selectedTradieId, setSelectedTradieId] = useState("");
 const [rating, setRating] = useState("");
+const [submittedReviews, setSubmittedReviews] = useState([]);
+const [showReviewHistory, setShowReviewHistory] = useState(false);
 const [comment, setComment] = useState("");
 
-  useEffect(() => {
-    supabase
-      .from("tradesperson_profiles")
-      .select("*")
-      .then(({ data }) => setTradies(data || []));
-  }, []);
+useEffect(() => {
+  supabase
+    .from("tradesperson_profiles")
+    .select("*")
+    .then(({ data }) => setTradies(data || []));
+
+  supabase
+    .from("reviews")
+    .select("*")
+    .eq("customer_id", profile.id)
+    .order("created_at", { ascending: false })
+    .then(({ data }) => setSubmittedReviews(data || []));
+}, [profile.id]);
 
   async function submit(event) {
     event.preventDefault();
@@ -102,6 +111,13 @@ setSelectedTradieId("");
 setRating("");
 setComment("");
 loadPublicData();
+const { data: refreshedReviews } = await supabase
+  .from("reviews")
+  .select("*")
+  .eq("customer_id", profile.id)
+  .order("created_at", { ascending: false });
+
+setSubmittedReviews(refreshedReviews || []);
 }
 
   return (
@@ -141,6 +157,72 @@ loadPublicData();
 />
 
       <button className="primary">Submit review</button>
+      <button
+  type="button"
+  className="secondary"
+  onClick={() => setShowReviewHistory((current) => !current)}
+>
+  {showReviewHistory
+    ? "Hide my reviews"
+    : `View my reviews (${submittedReviews.length})`}
+</button>
+      {showReviewHistory && (
+        <div className="submitted-reviews-list">
+          <div className="submitted-reviews-heading">
+<strong>My Reviews ({submittedReviews.length})</strong>
+<span>Reviews you've submitted</span>
+          </div>
+
+          {submittedReviews.length === 0 ? (
+            <p className="muted">
+              You have not submitted any reviews yet.
+            </p>
+          ) : (
+            submittedReviews.map((review) => {
+              const tradie = tradies.find(
+                (item) =>
+                  String(item.id) === String(review.tradesperson_id)
+              );
+
+              return (
+                <article
+                  className="submitted-review-card"
+                  key={review.id}
+                >
+                  <div className="submitted-review-header">
+                    <strong>
+                      {tradie?.business_name || "Tradesperson"}
+                    </strong>
+
+                    <span className="submitted-review-stars">
+                      {"★".repeat(Number(review.rating || 0))}
+                      {"☆".repeat(
+                        5 - Number(review.rating || 0)
+                      )}
+                    </span>
+                  </div>
+
+                  <p className="submitted-review-comment">
+                    {review.comment}
+                  </p>
+
+                  {review.created_at && (
+                    <small className="submitted-review-date">
+                      {new Date(
+                        review.created_at
+                      ).toLocaleDateString("en-IE", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric"
+                      })}
+                    </small>
+                  )}
+                </article>
+              );
+            })
+          )}
+        </div>
+      )}
     </form>
   );
 }

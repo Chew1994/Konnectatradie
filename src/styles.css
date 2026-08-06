@@ -3840,3 +3840,70 @@ img,svg,video,canvas{
     padding:13px 14px;
   }
 }
+/* ==========================
+   Submitted Review History
+========================== */
+
+.submitted-reviews-list{
+  margin-top:20px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.submitted-reviews-heading{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  padding-bottom:8px;
+  border-bottom:1px solid #ececec;
+}
+
+.submitted-reviews-heading strong{
+  font-size:1.05rem;
+  color:#111827;
+}
+
+.submitted-reviews-heading span{
+  font-size:.9rem;
+  color:#6b7280;
+}
+
+.submitted-review-card{
+  background:#fff;
+  border:1px solid #ececec;
+  border-radius:16px;
+  padding:18px;
+  box-shadow:0 6px 18px rgba(0,0,0,.05);
+}
+
+.submitted-review-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  margin-bottom:12px;
+}
+
+.submitted-review-header strong{
+  font-size:1rem;
+  color:#111827;
+}
+
+.submitted-review-stars{
+  color:#ff6b00;
+  font-size:1rem;
+  white-space:nowrap;
+}
+
+.submitted-review-comment{
+  margin:0 0 14px;
+  line-height:1.6;
+  color:#374151;
+}
+
+.submitted-review-date{
+  display:block;
+  color:#9ca3af;
+  font-size:.85rem;
+}
