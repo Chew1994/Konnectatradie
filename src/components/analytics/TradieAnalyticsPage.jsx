@@ -1,6 +1,12 @@
 import React, { useMemo } from "react";
 import QuoteAgeingPanel from "./QuoteAgeingPanel";
 import BusinessCoachPanel from "./BusinessCoachPanel";
+import RevenueTrendsPanel from "./RevenueTrendsPanel";
+import PerformanceTimelinePanel from "./PerformanceTimelinePanel";
+import BusinessInsightsPanel from "./BusinessInsightsPanel";
+import BusinessHealthPanel from "./BusinessHealthPanel";
+import RevenueForecastPanel from "./RevenueForecastPanel";
+import BusinessScoreBreakdownPanel from "./BusinessScoreBreakdownPanel";
 import {
   Activity,
   Award,
@@ -450,6 +456,45 @@ const likelyRevenue =
   Math.round(
     pipelineValue * (winRate / 100)
   );
+  const monthlyRevenue = Array.from(
+  { length: 12 },
+  (_, monthIndex) => {
+    const revenue = acceptedQuotes.reduce(
+      (total, quote) => {
+        const date =
+          quote.accepted_at ??
+          quote.updated_at ??
+          quote.created_at;
+
+        if (!date) return total;
+
+        const acceptedDate = new Date(date);
+
+        if (
+          acceptedDate.getMonth() !== monthIndex
+        ) {
+          return total;
+        }
+
+        return (
+          total +
+          safeNumber(
+            quote.total_price ??
+            quote.amount ??
+            quote.price ??
+            quote.value
+          )
+        );
+      },
+      0
+    );
+
+    return {
+      month: MONTH_LABELS[monthIndex],
+      revenue
+    };
+  }
+);
 
     const averageQuote =
       average(quoteValues);
@@ -1125,6 +1170,7 @@ const likelyRevenue =
       pipelineValue,
       revenueLost,
       likelyRevenue,
+      monthlyRevenue,
       averageQuote,
       averageAcceptedQuote,
       averageLostQuote,
@@ -1270,114 +1316,19 @@ const likelyRevenue =
         </section>
       )}
  
-       <section className="analytics-health-card">
-        <div>
-          <span className="label">
-            Business score
-          </span>
+<BusinessHealthPanel
+  businessHealth={analytics.businessHealth}
+  formatPercent={formatPercent}
+/>
 
-          <strong>
-            {Math.round(
-              analytics.businessHealth
-            )}{" "}
-            / 100
-          </strong>
+    <RevenueForecastPanel
+  analytics={analytics}
+  formatCurrency={formatCurrency}
+/>
 
-          <p>
-            Calculated from quote performance,
-            customer reviews, completed work,
-            response speed and profile quality.
-          </p>
-        </div>
-
-        <div
-          className="analytics-health-ring"
-          style={{
-            "--analytics-progress":
-              `${analytics.businessHealth * 3.6}deg`
-          }}
-        >
-          <span>
-            {formatPercent(
-              analytics.businessHealth
-            )}
-          </span>
-        </div>
-      </section>
-
-      <section className="analytics-panel analytics-revenue-forecast">
-        <div className="analytics-panel-heading">
-          <div className="analytics-panel-icon">
-            <TrendingUp />
-          </div>
-
-          <div>
-            <h2>Revenue forecast</h2>
-            <p>
-              Compare confirmed, likely, pending and lost quote value.
-            </p>
-          </div>
-        </div>
-
-        <div className="analytics-forecast-grid">
-          <article>
-            <span>Revenue won</span>
-            <strong>
-              {formatCurrency(analytics.revenueWon)}
-            </strong>
-            <small>Accepted quote value</small>
-          </article>
-
-          <article>
-            <span>Likely revenue</span>
-            <strong>
-              {formatCurrency(analytics.likelyRevenue)}
-            </strong>
-            <small>
-              Estimated from pipeline and current win rate
-            </small>
-          </article>
-
-          <article>
-            <span>Potential pipeline</span>
-            <strong>
-              {formatCurrency(analytics.pipelineValue)}
-            </strong>
-            <small>All pending quote value</small>
-          </article>
-
-          <article>
-            <span>Lost opportunities</span>
-            <strong>
-              {formatCurrency(analytics.revenueLost)}
-            </strong>
-            <small>Declined, rescinded or cancelled</small>
-          </article>
-        </div>
-
-        {analytics.pipelineValue > 0 && analytics.winRate === 0 && (
-          <div className="analytics-forecast-note">
-            <Activity size={20} />
-
-            <p>
-              Likely revenue will become more accurate once you have
-              accepted and declined quote history.
-            </p>
-          </div>
-        )}
-                  <QuoteAgeingPanel
-        pendingQuotes={analytics.pendingQuotes}
-        jobPosts={jobPosts}
-        onOpenJob={onOpenJob}
-        onViewQuotes={onViewQuotes}
-      />
-
-      <BusinessCoachPanel
-        analytics={analytics}
-        onViewQuotes={onViewQuotes}
-        onOpenDashboard={onBack}
-      />
-      </section>
+<BusinessScoreBreakdownPanel
+  analytics={analytics}
+/>
 
       <div className="analytics-metric-grid">
         <AnalyticsMetric
@@ -1937,6 +1888,31 @@ const likelyRevenue =
           </article>
         </div>
       </section>
+
+<QuoteAgeingPanel
+  pendingQuotes={analytics.pendingQuotes}
+  jobPosts={jobPosts}
+  onOpenJob={onOpenJob}
+  onViewQuotes={onViewQuotes}
+/>
+
+<RevenueTrendsPanel
+  analytics={analytics}
+/>
+
+<PerformanceTimelinePanel
+  analytics={analytics}
+/>
+
+<BusinessCoachPanel
+  analytics={analytics}
+  onViewQuotes={onViewQuotes}
+  onOpenDashboard={onBack}
+/>
+
+<BusinessInsightsPanel
+  analytics={analytics}
+/>
 
       <section className="analytics-review-summary">
         <div>
