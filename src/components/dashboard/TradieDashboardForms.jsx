@@ -16,9 +16,11 @@ export function TradieForm({
   const [tradie, setTradie] = useState(null);
   const [photos, setPhotos] = useState([]);
 
-  useEffect(() => {
+useEffect(() => {
+  if (userId) {
     load();
-  }, []);
+  }
+}, [userId]);
 
   async function load() {
     const { data } = await supabase
@@ -159,11 +161,11 @@ export function TradieForm({
   }
 
   return (
-    <form className="side-card" onSubmit={submit}>
-      <h3>
-        <Wrench size={17} />
-        Business Profile
-      </h3>
+<form
+  key={tradie?.id || "new-tradie"}
+  className="side-card"
+  onSubmit={submit}
+>
 
       <p>
         Status:{" "}
@@ -294,9 +296,11 @@ export function TradieForm({
         </div>
       </div>
 
-      <button className="primary">
-        Save business listing
-      </button>
+<button className="primary">
+  {tradie
+    ? "Edit business listing"
+    : "Save business listing"}
+</button>
     </form>
   );
 }
