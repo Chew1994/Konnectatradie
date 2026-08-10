@@ -3198,3 +3198,191 @@ input[type="file"]::file-selector-button:hover{
     grid-template-columns: repeat(12, 68px);
   }
 }
+/* =========================================================
+   KONNECTATRADIE — ANALYTICS MOBILE RESPONSIVE PASS
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+  /* Prevent analytics children from forcing page overflow */
+  .tradie-analytics-page,
+  .tradie-analytics-page > *,
+  .analytics-panel,
+  .analytics-insights-panel {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .tradie-analytics-page {
+    gap: 16px;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .analytics-page-header {
+    width: 100%;
+  }
+
+  .analytics-header-actions {
+    width: 100%;
+    justify-content: stretch;
+    gap: 10px;
+  }
+
+  .analytics-header-actions button {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Main analytics panels */
+  .analytics-panel,
+  .analytics-insights-panel {
+    padding: 16px;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  /* Primary grids */
+  .analytics-metric-grid,
+  .analytics-two-column,
+  .analytics-insight-grid,
+  .analytics-funnel,
+  .analytics-recommendation-grid,
+  .analytics-achievement-grid,
+  .analytics-forecast-grid,
+  .business-coach-grid,
+  .business-coach-summary,
+  .quote-ageing-summary,
+  .quote-ageing-buckets,
+  .analytics-performance-summary,
+  .analytics-trends-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Individual cards */
+  .analytics-metric,
+  .analytics-funnel-step,
+  .analytics-recommendation,
+  .analytics-achievement,
+  .business-coach-card,
+  .quote-follow-up-card,
+  .analytics-trends-summary article {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Business score */
+  .analytics-score-factor > div:first-child,
+  .analytics-score-info,
+  .analytics-score-total {
+    min-width: 0;
+  }
+
+  .analytics-score-info > div:first-child {
+    min-width: 0;
+  }
+
+  .analytics-score-info > div:first-child > * {
+    min-width: 0;
+  }
+
+  /* Long text must wrap instead of widening the viewport */
+  .tradie-analytics-page h1,
+  .tradie-analytics-page h2,
+  .tradie-analytics-page h3,
+  .tradie-analytics-page p,
+  .tradie-analytics-page span,
+  .tradie-analytics-page strong,
+  .tradie-analytics-page small {
+    overflow-wrap: anywhere;
+  }
+
+  /* Revenue trends
+     Keep the 12-month chart scrollable instead of crushing it. */
+  .analytics-revenue-chart {
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: repeat(12, 64px);
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 2px 14px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .analytics-revenue-bar {
+    min-width: 0;
+  }
+
+  /* Performance timeline — same principle as revenue chart */
+  .analytics-performance-chart {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Coach */
+  .business-coach-card {
+    padding: 16px;
+  }
+
+  .business-coach-card-top {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  /* Quote ageing */
+  .quote-follow-up-card {
+    padding: 16px;
+  }
+}
+
+
+/* Extra-small phones */
+@media (max-width: 430px) {
+
+  .tradie-analytics-page {
+    gap: 14px;
+  }
+
+  .analytics-panel,
+  .analytics-insights-panel {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .analytics-metric {
+    padding: 16px;
+  }
+
+  .analytics-funnel-step,
+  .analytics-recommendation,
+  .analytics-achievement,
+  .business-coach-card,
+  .quote-follow-up-card {
+    padding: 14px;
+  }
+
+  .analytics-trends-summary article {
+    padding: 15px;
+  }
+
+  .analytics-trends-summary article strong {
+    font-size: 1.3rem;
+  }
+
+  .analytics-revenue-chart {
+    grid-template-columns: repeat(12, 60px);
+    gap: 8px;
+  }
+
+  .analytics-score-factor {
+    padding: 14px;
+  }
+}
