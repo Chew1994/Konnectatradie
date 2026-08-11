@@ -1,6 +1,6 @@
 /* =========================================================
    KonnectaTradie Premium Theme
-   Sprint 7 — Pass 1: Gunmetal foundation
+   Sprint 7 â€” Pass 1: Gunmetal foundation
 ========================================================= */
 
 :root{
@@ -504,7 +504,7 @@ footer{
   }
 }
 /* =========================================================
-   Sprint 7 — Pass 2
+   Sprint 7 â€” Pass 2
    Legacy light-surface compatibility layer
 ========================================================= */
 
@@ -1311,7 +1311,7 @@ input[type="file"]::file-selector-button:hover{
 }
 
 /* =========================================================
-   Tradie Analytics — Phase 1
+   Tradie Analytics â€” Phase 1
 ========================================================= */
 
 .tradie-analytics-page{
@@ -1596,7 +1596,7 @@ input[type="file"]::file-selector-button:hover{
   }
 }
 /* =========================================================
-   Tradie Analytics — Phase 2 Extensions
+   Tradie Analytics â€” Phase 2 Extensions
 ========================================================= */
 
 /* Conversion funnel */
@@ -1948,7 +1948,7 @@ input[type="file"]::file-selector-button:hover{
   }
 }
 /* =========================================================
-   Tradie Analytics — Revenue Forecast
+   Tradie Analytics â€” Revenue Forecast
 ========================================================= */
 
 .analytics-revenue-forecast{
@@ -2935,7 +2935,7 @@ input[type="file"]::file-selector-button:hover{
     0 12px 30px rgba(0, 0, 0, 0.16);
 }
 /* ==========================================================
-   Sprint 13A — Dashboard section polish
+   Sprint 13A â€” Dashboard section polish
 ========================================================== */
 
 .action-layout {
@@ -3199,7 +3199,7 @@ input[type="file"]::file-selector-button:hover{
   }
 }
 /* =========================================================
-   KONNECTATRADIE — ANALYTICS MOBILE RESPONSIVE PASS
+   KONNECTATRADIE â€” ANALYTICS MOBILE RESPONSIVE PASS
    ========================================================= */
 
 @media (max-width: 760px) {
@@ -3316,7 +3316,7 @@ input[type="file"]::file-selector-button:hover{
     min-width: 0;
   }
 
-  /* Performance timeline — same principle as revenue chart */
+  /* Performance timeline â€” same principle as revenue chart */
   .analytics-performance-chart {
     width: 100%;
     max-width: 100%;
@@ -3429,3 +3429,870 @@ input[type="file"]::file-selector-button:hover{
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Launch Readability Pass
+   Keep quote/workspace surfaces aligned with dark theme
+   ========================================================= */
+
+.quote-form,
+.quote-panel,
+.job-detail-card,
+.job-workspace-quote-composer,
+.customer-quote-card,
+.quote-management-card,
+.workspace-card,
+.side-card {
+  color: var(--kt-text) !important;
+  background: #2f3742 !important;
+  border-color: var(--kt-border) !important;
+}
+
+/* Quote form labels must remain visible on dark surfaces */
+.quote-form .field span,
+.job-workspace-quote-composer .field span,
+.quote-panel .field span {
+  color: var(--kt-text-secondary) !important;
+}
+
+/* Inputs and textareas */
+.quote-form input,
+.quote-form textarea,
+.quote-form select,
+.job-workspace-quote-composer input,
+.job-workspace-quote-composer textarea,
+.job-workspace-quote-composer select {
+  color: var(--kt-text) !important;
+  background: #1f242b !important;
+  border-color: var(--kt-border) !important;
+}
+
+.quote-form input::placeholder,
+.quote-form textarea::placeholder,
+.job-workspace-quote-composer input::placeholder,
+.job-workspace-quote-composer textarea::placeholder {
+  color: #98a2ae !important;
+}
+
+/* Make quote/card body copy readable */
+.quote-management-card p,
+.customer-quote-card p,
+.job-detail-card p,
+.job-workspace-quote-composer p {
+  color: var(--kt-text-secondary) !important;
+}
+
+/* Smart notices */
+.smart-notice {
+  color: #bbf7d0 !important;
+  background: rgba(34, 197, 94, 0.11) !important;
+  border-color: rgba(34, 197, 94, 0.36) !important;
+}
+
+.smart-notice strong {
+  color: #dcfce7 !important;
+}
+
+.smart-notice span {
+  color: #86efac !important;
+}
+
+.smart-info {
+  color: #bfdbfe !important;
+  background: rgba(59, 130, 246, 0.12) !important;
+  border-color: rgba(59, 130, 246, 0.36) !important;
+}
+
+.smart-info strong {
+  color: #dbeafe !important;
+}
+
+.smart-info span {
+  color: #93c5fd !important;
+}
+
+.smart-danger {
+  color: #fecaca !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.38) !important;
+}
+
+.smart-danger strong {
+  color: #fee2e2 !important;
+}
+
+.smart-danger span {
+  color: #fca5a5 !important;
+}
+
+/* Status pills on light-colour status backgrounds */
+.status-open,
+.status-pending,
+.status-requested,
+.status-pending_response,
+.status-pending_payment {
+  color: #9a3412 !important;
+  background: #ffedd5 !important;
+}
+
+.status-accepted,
+.status-paid,
+.status-quote_accepted,
+.status-Available {
+  color: #166534 !important;
+  background: #dcfce7 !important;
+}
+
+.status-declined,
+.status-rejected,
+.status-cancelled {
+  color: #991b1b !important;
+  background: #fee2e2 !important;
+}
+
+.status-completed,
+.status-rescinded {
+  color: #1f2937 !important;
+  background: #e5e7eb !important;
+}
+
+/* =========================================================
+   KONNECTATRADIE â€” LAUNCH VISUAL SYSTEM
+   Final authority for workspace, quotes, statuses and trust UI
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   1. JOB WORKSPACE METADATA
+   --------------------------------------------------------- */
+
+.job-workspace-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0 18px;
+}
+
+.job-workspace-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid #4a5563 !important;
+  border-radius: 999px;
+  background: #242b33 !important;
+  color: #dce3ea !important;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+.job-workspace-meta span strong {
+  color: #ffffff !important;
+  font-weight: 850;
+}
+
+.job-workspace-meta span:last-child {
+  border-color: rgba(249,115,22,.48) !important;
+  background: rgba(249,115,22,.12) !important;
+  color: #fdba74 !important;
+}
+
+/* ---------------------------------------------------------
+   2. QUOTE ANALYTICS METRIC CARDS
+   --------------------------------------------------------- */
+
+.quote-metric-grid {
+  gap: 12px !important;
+}
+
+.quote-metric-grid > div {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  padding: 16px !important;
+  border: 1px solid #46515e !important;
+  border-radius: 17px !important;
+  background:
+    linear-gradient(
+      145deg,
+      #343d47 0%,
+      #29313a 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.045),
+    0 8px 20px rgba(0,0,0,.12);
+}
+
+.quote-metric-grid > div::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #f97316;
+  opacity: .9;
+}
+
+.quote-metric-grid > div:nth-child(2)::before {
+  background: #f59e0b;
+}
+
+.quote-metric-grid > div:nth-child(3)::before {
+  background: #22c55e;
+}
+
+.quote-metric-grid > div:nth-child(4)::before {
+  background: #ef4444;
+}
+
+.quote-metric-grid strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #ffffff !important;
+  font-size: 25px !important;
+  font-weight: 900;
+  letter-spacing: -.04em;
+}
+
+.quote-metric-grid span {
+  color: #b8c2ce !important;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------
+   3. SUCCESS RATE RING
+   --------------------------------------------------------- */
+
+.success-ring {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 100px;
+  width: 100px !important;
+  min-width: 100px !important;
+  height: 100px !important;
+  min-height: 100px !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at center,
+      #252c34 0%,
+      #252c34 57%,
+      transparent 58%
+    ),
+    conic-gradient(
+      conic-gradient(
+  #f97316 0 var(--success-rate),
+  #4b5563 var(--success-rate) 100%
+)
+    ) !important;
+  border: 1px solid #4c5662;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    0 10px 25px rgba(0,0,0,.22),
+    0 0 22px rgba(249,115,22,.12) !important;
+}
+
+.success-ring strong {
+  position: relative;
+  z-index: 2;
+  display: block;
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 24px !important;
+  font-weight: 950;
+  line-height: 1 !important;
+  letter-spacing: -.05em;
+}
+
+.success-ring span {
+  position: relative;
+  z-index: 2;
+  display: block;
+  margin: 5px 0 0 !important;
+  color: #fdba74 !important;
+  font-size: 10px !important;
+  font-weight: 900;
+  line-height: 1 !important;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+/* ---------------------------------------------------------
+   4. WORKSPACE MESSAGE COMPOSER
+   --------------------------------------------------------- */
+
+.workspace-message-form {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 50px;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 12px 0 0 !important;
+  background: #2f3742 !important;
+  border: 0 !important;
+}
+
+.workspace-message-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 50px !important;
+  padding: 0 16px !important;
+  border: 1px solid #505b68 !important;
+  border-radius: 16px !important;
+  background: #1d232a !important;
+  color: #ffffff !important;
+  font-size: 14px;
+  font-weight: 650;
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.25) !important;
+}
+
+.workspace-message-form input::placeholder {
+  color: #8793a1 !important;
+  opacity: 1;
+}
+
+.workspace-message-form input:focus {
+  outline: none !important;
+  border-color: #f97316 !important;
+  box-shadow:
+    0 0 0 3px rgba(249,115,22,.14),
+    inset 0 1px 2px rgba(0,0,0,.22) !important;
+}
+
+.workspace-message-form button {
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px;
+  min-height: 50px !important;
+  padding: 0 !important;
+  display: grid;
+  place-items: center;
+  border: 0 !important;
+  border-radius: 16px !important;
+  background:
+    linear-gradient(135deg,#ff7a18,#f35b0a) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 8px 20px rgba(249,115,22,.26) !important;
+}
+
+.workspace-message-form button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.workspace-message-form button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------
+   5. GLOBAL STATUS LANGUAGE
+   --------------------------------------------------------- */
+
+.status,
+.chip {
+  border: 1px solid transparent;
+}
+
+/* Open / pending */
+.status-open,
+.status-pending,
+.status-pending_response,
+.status-pending_payment {
+  background: rgba(245,158,11,.16) !important;
+  border-color: rgba(245,158,11,.45) !important;
+  color: #fbbf24 !important;
+}
+
+/* Accepted */
+.status-accepted,
+.status-quote_accepted,
+.status-paid,
+.status-Available {
+  background: rgba(34,197,94,.16) !important;
+  border-color: rgba(34,197,94,.48) !important;
+  color: #4ade80 !important;
+}
+
+/* Declined / rejected */
+.status-declined,
+.status-rejected,
+.status-cancelled {
+  background: rgba(239,68,68,.14) !important;
+  border-color: rgba(239,68,68,.42) !important;
+  color: #f87171 !important;
+}
+
+/* In progress */
+.status-in_progress {
+  background: rgba(59,130,246,.15) !important;
+  border-color: rgba(59,130,246,.44) !important;
+  color: #60a5fa !important;
+}
+
+/* Completed */
+.status-completed,
+.status-reviewed {
+  background: rgba(20,184,166,.16) !important;
+  border-color: rgba(45,212,191,.45) !important;
+  color: #5eead4 !important;
+}
+
+/* Rescinded / closed neutral state */
+.status-rescinded,
+.status-closed {
+  background: rgba(148,163,184,.13) !important;
+  border-color: rgba(148,163,184,.32) !important;
+  color: #cbd5e1 !important;
+}
+
+/* ---------------------------------------------------------
+   6. VERIFIED / APPROVED TRUST STATES
+   --------------------------------------------------------- */
+
+.verified-chip,
+.status-verified {
+  background: #22c55e !important;
+  border: 1px solid #4ade80 !important;
+  color: #052e16 !important;
+  font-weight: 950 !important;
+  box-shadow:
+    0 0 0 1px rgba(74,222,128,.08),
+    0 5px 16px rgba(34,197,94,.20) !important;
+}
+
+.verified-public-badge {
+  background: #22c55e !important;
+  border: 1px solid #4ade80 !important;
+  color: #052e16 !important;
+  font-weight: 950 !important;
+  box-shadow:
+    0 8px 22px rgba(34,197,94,.24) !important;
+}
+
+.verified-public-badge svg,
+.verified-chip svg,
+.status-verified svg {
+  color: #052e16 !important;
+  stroke: currentColor !important;
+}
+
+.approved-badge:not(.verified-public-badge) {
+  background: #313944 !important;
+  border: 1px solid #596574 !important;
+  color: #f1f5f9 !important;
+}
+
+/* ---------------------------------------------------------
+   7. DARK WORKSPACE SURFACE CONSISTENCY
+   --------------------------------------------------------- */
+
+.job-detail-card,
+.job-workspace-quote-composer,
+.workspace-conversation,
+.workspace-quotes-panel,
+.quote-analytics-card {
+  border-color: #46515e !important;
+}
+
+.workspace-conversation,
+.workspace-quotes-panel {
+  background: #2f3742 !important;
+}
+
+/* Kill legacy light bands around messenger */
+.workspace-conversation .message-form,
+.workspace-conversation .workspace-message-form {
+  background-color: #2f3742 !important;
+}
+
+/* ---------------------------------------------------------
+   8. MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 760px) {
+
+  .job-workspace-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .job-workspace-meta span {
+    min-width: 0;
+    border-radius: 12px;
+    line-height: 1.25;
+  }
+
+  .quote-metric-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .success-ring {
+    width: 92px !important;
+    min-width: 92px !important;
+    height: 92px !important;
+    min-height: 92px !important;
+  }
+
+  .workspace-message-form {
+    grid-template-columns: minmax(0,1fr) 48px;
+    padding-top: 10px !important;
+  }
+
+  .workspace-message-form input {
+    min-height: 48px !important;
+  }
+
+  .workspace-message-form button {
+    width: 48px !important;
+    min-width: 48px;
+    height: 48px !important;
+    min-height: 48px !important;
+  }
+}
+
+@media (max-width: 430px) {
+
+  .job-workspace-meta,
+  .quote-metric-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+/* =========================================================
+   KONNECTATRADIE — JOB WORKSPACE CONVERSATION + TIMELINE
+   Final dark-theme alignment
+   ========================================================= */
+
+/* Conversation card */
+.workspace-conversation {
+  background: #2f3742 !important;
+  border: 1px solid #46515e !important;
+  border-left: 4px solid var(--kt-orange) !important;
+  border-radius: 22px !important;
+  padding: 20px !important;
+  overflow: hidden;
+}
+
+/* Remove legacy light/header band appearance */
+.workspace-conversation .workspace-section-head {
+  margin: 0 0 18px !important;
+  padding: 0 0 16px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid #46515e !important;
+  border-radius: 0 !important;
+}
+
+.workspace-conversation .workspace-section-head h3 {
+  color: var(--kt-text) !important;
+  margin: 4px 0 0 !important;
+}
+
+.workspace-conversation .workspace-section-head .label {
+  color: var(--kt-orange) !important;
+}
+
+/* Guidance panel */
+.workspace-conversation .chat-guidance {
+  display: grid;
+  gap: 5px;
+  margin: 0 0 14px !important;
+  padding: 14px 16px !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(249,115,22,.13),
+      rgba(249,115,22,.05)
+    ) !important;
+  border: 1px solid rgba(249,115,22,.34) !important;
+  border-left: 3px solid var(--kt-orange) !important;
+  border-radius: 14px !important;
+  color: var(--kt-text) !important;
+}
+
+.workspace-conversation .chat-guidance strong {
+  color: var(--kt-text) !important;
+  font-size: .95rem;
+}
+
+.workspace-conversation .chat-guidance span {
+  color: var(--kt-text-secondary) !important;
+  font-weight: 600 !important;
+  line-height: 1.45;
+}
+
+/* Quick message prompts */
+.workspace-conversation .quick-chat-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px !important;
+}
+
+.workspace-conversation .quick-chat-prompts button {
+  min-height: 36px;
+  padding: 7px 12px !important;
+  border: 1px solid #56616e !important;
+  border-radius: 999px !important;
+  background: #252c35 !important;
+  color: #d9e0e8 !important;
+  box-shadow: none !important;
+  font-size: .82rem;
+  font-weight: 800;
+  transition:
+    background .18s ease,
+    border-color .18s ease,
+    color .18s ease,
+    transform .18s ease;
+}
+
+.workspace-conversation .quick-chat-prompts button:hover {
+  background: rgba(249,115,22,.13) !important;
+  border-color: var(--kt-orange) !important;
+  color: #fff !important;
+  transform: translateY(-1px);
+}
+
+/* Message history */
+.workspace-conversation .workspace-messages {
+  min-height: 320px !important;
+  max-height: 520px !important;
+  margin: 0 0 14px !important;
+  padding: 18px !important;
+  background: #1d232b !important;
+  border: 1px solid #46515e !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+}
+
+/* Empty conversation */
+.workspace-conversation .chat-empty {
+  min-height: 280px !important;
+  color: #98a4b3 !important;
+}
+
+.workspace-conversation .chat-empty svg {
+  color: #7f8b99 !important;
+  stroke: currentColor;
+}
+
+.workspace-conversation .chat-empty strong {
+  color: #f4f7fb !important;
+  font-size: 1rem !important;
+  font-weight: 900;
+}
+
+.workspace-conversation .chat-empty span {
+  color: #9eabb9 !important;
+  font-weight: 500;
+}
+
+/* Existing messages */
+.workspace-conversation .workspace-messages .msg {
+  background: #29313b !important;
+  border: 1px solid #46515e !important;
+  color: var(--kt-text) !important;
+  box-shadow: 0 5px 14px rgba(0,0,0,.13) !important;
+}
+
+.workspace-conversation .workspace-messages .msg.mine {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(249,115,22,.22),
+      rgba(249,115,22,.11)
+    ) !important;
+  border-color: rgba(249,115,22,.48) !important;
+}
+
+.workspace-conversation .workspace-messages .msg span {
+  color: var(--kt-text) !important;
+}
+
+.workspace-conversation .workspace-messages .msg small {
+  color: #9aa6b4 !important;
+}
+
+/* Composer */
+.workspace-conversation .workspace-message-form {
+  position: static !important;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 52px;
+  gap: 10px;
+  align-items: center;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.workspace-conversation .workspace-message-form input {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  padding: 0 16px !important;
+  background: #1d232b !important;
+  border: 1px solid #53606e !important;
+  border-radius: 15px !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+.workspace-conversation .workspace-message-form input::placeholder {
+  color: #91a0b1 !important;
+  opacity: 1;
+}
+
+.workspace-conversation .workspace-message-form input:focus {
+  outline: none;
+  border-color: var(--kt-orange) !important;
+  box-shadow: 0 0 0 3px rgba(249,115,22,.12) !important;
+}
+
+.workspace-conversation .workspace-message-form button {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px !important;
+}
+
+/* Timeline card */
+.workspace-timeline {
+  position: sticky;
+  top: 92px;
+  padding: 20px !important;
+  background: #2f3742 !important;
+  border: 1px solid #46515e !important;
+  border-left: 4px solid var(--kt-orange) !important;
+  border-radius: 22px !important;
+}
+
+.workspace-timeline .workspace-section-head {
+  margin: 0 0 20px !important;
+  padding: 0 0 15px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid #46515e !important;
+  border-radius: 0 !important;
+}
+
+.workspace-timeline .workspace-section-head .label {
+  color: var(--kt-orange) !important;
+}
+
+.workspace-timeline .workspace-section-head h3 {
+  margin: 4px 0 0 !important;
+  color: var(--kt-text) !important;
+}
+
+.workspace-timeline-list {
+  margin-top: 0 !important;
+}
+
+.workspace-timeline-item {
+  min-height: 82px !important;
+  color: #8794a4 !important;
+}
+
+.workspace-timeline-item strong {
+  margin-bottom: 5px !important;
+  color: #9ba7b5 !important;
+  font-weight: 850;
+}
+
+.workspace-timeline-item > div > span {
+  color: #8f9cac !important;
+  line-height: 1.45;
+}
+
+.workspace-timeline-marker {
+  width: 16px !important;
+  height: 16px !important;
+  background: #252c35 !important;
+  border: 3px solid #687482 !important;
+}
+
+.workspace-timeline-item:not(:last-child)::after {
+  background: #525d69 !important;
+}
+
+.workspace-timeline-item.complete strong,
+.workspace-timeline-item.current strong {
+  color: #f5f7fa !important;
+}
+
+.workspace-timeline-item.complete > div > span,
+.workspace-timeline-item.current > div > span {
+  color: #b8c2ce !important;
+}
+
+.workspace-timeline-item.complete .workspace-timeline-marker {
+  border-color: var(--kt-orange) !important;
+  background: var(--kt-orange) !important;
+  box-shadow: 0 0 0 4px rgba(249,115,22,.10);
+}
+
+.workspace-timeline-item.complete:not(:last-child)::after {
+  background: var(--kt-orange) !important;
+}
+
+.workspace-timeline-item.current .workspace-timeline-marker {
+  border-color: var(--kt-orange) !important;
+  background: #252c35 !important;
+  box-shadow: 0 0 0 5px rgba(249,115,22,.15) !important;
+}
+
+/* Responsive workspace */
+@media (max-width: 1000px) {
+  .workspace-timeline {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace-conversation,
+  .workspace-timeline {
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .workspace-conversation .workspace-messages {
+    min-height: 280px !important;
+    padding: 12px !important;
+  }
+
+  .workspace-conversation .chat-empty {
+    min-height: 240px !important;
+  }
+
+  .workspace-conversation .workspace-message-form {
+    grid-template-columns: minmax(0,1fr) 48px;
+  }
+
+  .workspace-conversation .workspace-message-form input,
+  .workspace-conversation .workspace-message-form button {
+    height: 48px;
+  }
+
+  .workspace-conversation .workspace-message-form button {
+    width: 48px;
+    min-width: 48px;
+  }
+}
+

@@ -847,21 +847,54 @@ function Auth({
 
 
 
-function JobsBoard({ profile, tradespeople, jobPosts, myTradie, setSelectedTradie, setSelectedJobPost, setTab, setMessage, loadPrivateData, loadPublicData }) {
-  return <section>
-    <div className="action-header">
-      <div>
-        <span className="label">Jobs board</span>
-        <h1>{["tradesperson","tradie"].includes(profile?.role) ? "Job Map & Available Jobs" : "Find work and TRADES nearby"}</h1>
-        <p>{["tradesperson","tradie"].includes(profile?.role) ? "Use the map and list together so you can find jobs faster." : "Browse the map and find trusted tradespeople."}</p>
-      </div>
-    </div>
+function JobsBoard({
+  profile,
+  tradespeople,
+  jobPosts,
+  myTradie,
+  setSelectedTradie,
+  setSelectedJobPost,
+  setTab,
+  setMessage,
+  loadPrivateData,
+  loadPublicData
+}) {
+  return (
+    <section>
+      <div className="jobs-board-combo">
+        <Suspense
+          fallback={
+            <LoadingState
+              title="Loading job map…"
+              text="We are preparing the map and available jobs."
+            />
+          }
+        >
+          <MapView
+            profile={profile}
+            tradespeople={tradespeople}
+            jobPosts={jobPosts}
+            setSelectedTradie={setSelectedTradie}
+            setSelectedJobPost={setSelectedJobPost}
+            setTab={setTab}
+          />
+        </Suspense>
 
-    <div className="jobs-board-combo">
-      <Suspense fallback={<LoadingState title="Loading job map…" text="We are preparing the map and available jobs."/>}><MapView profile={profile} tradespeople={tradespeople} jobPosts={jobPosts} setSelectedTradie={setSelectedTradie} setSelectedJobPost={setSelectedJobPost} setTab={setTab} /></Suspense>
-      {["tradesperson","tradie"].includes(profile?.role) && <AvailableJobs jobPosts={jobPosts} myTradie={myTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} setSelectedJobPost={setSelectedJobPost} setTab={setTab} />}
-    </div>
-  </section>;
+        {["tradesperson", "tradie"].includes(profile?.role) && (
+          <AvailableJobs
+            jobPosts={jobPosts}
+            myTradie={myTradie}
+            profile={profile}
+            setMessage={setMessage}
+            loadPrivateData={loadPrivateData}
+            loadPublicData={loadPublicData}
+            setSelectedJobPost={setSelectedJobPost}
+            setTab={setTab}
+          />
+        )}
+      </div>
+    </section>
+  );
 }
 
 
@@ -1143,14 +1176,43 @@ function QuotesSentPage({ myTradie, quotes = [], jobPosts = [], setMessage, load
         ? myQuotes
         : myQuotes.filter((q) => (q.status || "pending") === quoteFilter);
 
-  const totalQuotes = myQuotes.length;
-  const pendingQuotes = myQuotes.filter((q) => q.status === "pending").length;
-  const acceptedQuotes = myQuotes.filter((q) => q.status === "accepted").length;
-  const declinedQuotes = myQuotes.filter((q) => q.status === "declined").length;
-  const rescindedQuotes = myQuotes.filter((q) => q.status === "rescinded").length;
-  const cancelledQuotes = myQuotes.filter((q) => q.status === "cancelled").length;
-  const decidedQuotes = acceptedQuotes + declinedQuotes;
-  const successRate = decidedQuotes > 0 ? Math.round((acceptedQuotes / decidedQuotes) * 100) : 0;
+const totalQuotes = myQuotes.length;
+
+const pendingQuotes = myQuotes.filter(
+  (q) => q.status === "pending"
+).length;
+
+const acceptedQuotes = myQuotes.filter(
+  (q) => ["accepted", "completed"].includes(q.status)
+).length;
+
+const declinedQuotes = myQuotes.filter(
+  (q) => q.status === "declined"
+).length;
+
+const rescindedQuotes = myQuotes.filter(
+  (q) => q.status === "rescinded"
+).length;
+
+const cancelledQuotes = myQuotes.filter(
+  (q) => q.status === "cancelled"
+).length;
+
+const closedLostQuotes =
+  declinedQuotes +
+  rescindedQuotes +
+  cancelledQuotes;
+
+const decidedQuotes =
+  acceptedQuotes +
+  closedLostQuotes;
+
+const successRate =
+  decidedQuotes > 0
+    ? Math.round(
+        (acceptedQuotes / decidedQuotes) * 100
+      )
+    : 0;
   const maxChart = Math.max(totalQuotes, pendingQuotes, acceptedQuotes, declinedQuotes, rescindedQuotes, 1);
 
   async function rescindQuote(quote) {
@@ -1246,18 +1308,36 @@ function QuotesSentPage({ myTradie, quotes = [], jobPosts = [], setMessage, load
             <h2>Quote analytics</h2>
             <p>Active quotes are shown by default. Declined and rescinded quotes stay hidden unless selected.</p>
           </div>
-          <div className="success-ring">
+<div
+  className="success-ring"
+  style={{ "--success-rate": `${successRate}%` }}
+>
             <strong>{successRate}%</strong>
             <span>success</span>
           </div>
         </div>
 
-        <div className="quote-metric-grid">
-          <div><strong>{totalQuotes}</strong><span>Total sent</span></div>
-          <div><strong>{pendingQuotes}</strong><span>Pending</span></div>
-          <div><strong>{acceptedQuotes}</strong><span>Accepted</span></div>
-          <div><strong>{declinedQuotes}</strong><span>Declined</span></div>
-        </div>
+<div className="quote-metric-grid">
+  <div>
+    <strong>{totalQuotes}</strong>
+    <span>Total quotes</span>
+  </div>
+
+  <div>
+    <strong>{pendingQuotes}</strong>
+    <span>Pending</span>
+  </div>
+
+  <div>
+    <strong>{acceptedQuotes}</strong>
+    <span>Won</span>
+  </div>
+
+  <div>
+    <strong>{closedLostQuotes}</strong>
+    <span>Closed / lost</span>
+  </div>
+</div>
 
         <div className="quote-bars">
           <QuoteBar label="Sent" value={totalQuotes} max={maxChart} />
@@ -1984,12 +2064,6 @@ const nextAction = isCustomer
       </div>
     </div>
 
-    <div className="customer-quote-summary">
-      <div><strong>{qlist.length}</strong><span>Total quotes</span></div>
-      <div><strong>{pendingQuotes.length}</strong><span>Pending</span></div>
-      <div><strong>{acceptedQuotes.length}</strong><span>Accepted</span></div>
-      <div><strong>{declinedQuotes.length}</strong><span>Declined/closed</span></div>
-    </div>
 
     <div className="workspace-next-action" role="status">
       <div className="workspace-next-action-icon">
