@@ -371,10 +371,11 @@ export default function TradieAnalyticsPage({
         )
       : [];
 
-    const acceptedQuotes = myQuotes.filter(
-      (quote) =>
-        quote?.status === "accepted"
-    );
+const acceptedQuotes = myQuotes.filter(
+  (quote) =>
+    quote?.status === "accepted" ||
+    quote?.status === "completed"
+);
 
     const pendingQuotes = myQuotes.filter(
       (quote) =>
@@ -456,45 +457,41 @@ const likelyRevenue =
   Math.round(
     pipelineValue * (winRate / 100)
   );
-  const monthlyRevenue = Array.from(
-  { length: 12 },
-  (_, monthIndex) => {
-    const revenue = acceptedQuotes.reduce(
-      (total, quote) => {
-        const date =
-          quote.accepted_at ??
-          quote.updated_at ??
-          quote.created_at;
+     const monthlyRevenue = Array.from(
+      { length: 12 },
+      (_, monthIndex) => {
+        const revenue = acceptedQuotes.reduce(
+          (total, quote) => {
+            const date =
+              quote.accepted_at ??
+              quote.updated_at ??
+              quote.created_at;
 
-        if (!date) return total;
+            if (!date) return total;
 
-        const acceptedDate = new Date(date);
+            const acceptedDate = new Date(date);
 
-        if (
-          acceptedDate.getMonth() !== monthIndex
-        ) {
-          return total;
-        }
+            if (
+              Number.isNaN(acceptedDate.getTime()) ||
+              acceptedDate.getMonth() !== monthIndex
+            ) {
+              return total;
+            }
 
-        return (
-          total +
-          safeNumber(
-            quote.total_price ??
-            quote.amount ??
-            quote.price ??
-            quote.value
-          )
+            return (
+              total +
+              safeNumber(quote.price_eur)
+            );
+          },
+          0
         );
-      },
-      0
-    );
 
-    return {
-      month: MONTH_LABELS[monthIndex],
-      revenue
-    };
-  }
-);
+        return {
+          month: MONTH_LABELS[monthIndex],
+          revenue
+        };
+      }
+    );
 
     const averageQuote =
       average(quoteValues);
@@ -652,7 +649,7 @@ const likelyRevenue =
         "No activity yet"
       );
 
-    const tradieJobs = tradieId
+        const tradieDirectJobs = tradieId
       ? safeJobs.filter((job) => {
           const assignedTradie =
             job?.tradesperson_id ||
@@ -664,8 +661,16 @@ const likelyRevenue =
         })
       : [];
 
-    const acceptedJobs =
-      tradieJobs.filter((job) =>
+    const tradieMarketplaceJobs = tradieId
+      ? safeJobPosts.filter((job) =>
+          String(
+            job?.accepted_tradesperson_id || ""
+          ) === tradieId
+        )
+      : [];
+
+    const acceptedDirectJobs =
+      tradieDirectJobs.filter((job) =>
         [
           "accepted",
           "in_progress",
@@ -676,12 +681,42 @@ const likelyRevenue =
         )
       );
 
-    const completedJobs =
-      tradieJobs.filter((job) =>
+    const acceptedMarketplaceJobs =
+      tradieMarketplaceJobs.filter((job) =>
+        [
+          "quote_accepted",
+          "accepted",
+          "in_progress",
+          "completed",
+          "reviewed"
+        ].includes(
+          getLifecycleStatus(job)
+        )
+      );
+
+    const acceptedJobs = [
+      ...acceptedDirectJobs,
+      ...acceptedMarketplaceJobs
+    ];
+
+    const completedDirectJobs =
+      tradieDirectJobs.filter((job) =>
         COMPLETED_STATUSES.has(
           getLifecycleStatus(job)
         )
       );
+
+    const completedMarketplaceJobs =
+      tradieMarketplaceJobs.filter((job) =>
+        COMPLETED_STATUSES.has(
+          getLifecycleStatus(job)
+        )
+      );
+
+    const completedJobs = [
+      ...completedDirectJobs,
+      ...completedMarketplaceJobs
+    ];
 
     const tradieReviews = tradieId
       ? safeReviews.filter(

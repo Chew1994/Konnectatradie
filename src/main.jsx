@@ -1701,34 +1701,34 @@ async function submitQuote(e) {
     setQuoteActionId(q.id);
 
     try {
-      const { error: quoteError } = await supabase
-        .from("job_quotes")
-        .update({ status: "accepted" })
-        .eq("id", q.id);
+     const { error: quoteError } = await supabase
+  .from("job_quotes")
+  .update({ status: "accepted" })
+  .eq("id", q.id);
 
-      if (quoteError) {
-        setMessage(quoteError.message);
-        return;
-      }
+if (quoteError) {
+  setMessage(quoteError.message);
+  return;
+}
 
-      const { error: postError } = await supabase
-        .from("job_posts")
-        .update({
-          status: "quote_accepted",
-          accepted_quote_id: q.id,
-          accepted_tradesperson_id: q.tradesperson_id
-        })
-        .eq("id", jobPost.id);
+const { error: postError } = await supabase
+  .from("job_posts")
+  .update({
+    status: "quote_accepted",
+    accepted_quote_id: q.id,
+    accepted_tradesperson_id: q.tradesperson_id
+  })
+  .eq("id", jobPost.id);
 
-      if (postError) {
-        await supabase
-          .from("job_quotes")
-          .update({ status: "pending" })
-          .eq("id", q.id);
+if (postError) {
+  await supabase
+    .from("job_quotes")
+    .update({ status: "pending" })
+    .eq("id", q.id);
 
-        setMessage(postError.message);
-        return;
-      }
+  setMessage(postError.message);
+  return;
+}
 
       const accepted = { ...q, status: "accepted" };
 
@@ -1826,34 +1826,17 @@ async function submitQuote(e) {
     setQuoteActionId(q.id);
 
     try {
-      const { error: quoteError } = await supabase
-        .from("job_quotes")
-        .update({ status: "cancelled" })
-        .eq("id", q.id);
+const { error: cancelError } = await supabase.rpc(
+  "cancel_accepted_job_quote",
+  {
+    p_quote_id: q.id
+  }
+);
 
-      if (quoteError) {
-        setMessage(quoteError.message);
-        return;
-      }
-
-      const { error: postError } = await supabase
-        .from("job_posts")
-        .update({
-          status: "open",
-          accepted_quote_id: null,
-          accepted_tradesperson_id: null
-        })
-        .eq("id", jobPost.id);
-
-      if (postError) {
-        await supabase
-          .from("job_quotes")
-          .update({ status: "accepted" })
-          .eq("id", q.id);
-
-        setMessage(postError.message);
-        return;
-      }
+if (cancelError) {
+  setMessage(cancelError.message);
+  return;
+}
 
       setQuoteStatusOverrides((current) => ({
         ...current,

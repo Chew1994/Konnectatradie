@@ -3386,3 +3386,46 @@ input[type="file"]::file-selector-button:hover{
     padding: 14px;
   }
 }
+/* =========================================================
+   Tradie Work Planner
+   ========================================================= */
+
+.work-planner-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.work-planner-summary > div {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--kt-border-soft);
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(249, 115, 22, 0.06),
+      rgba(255, 255, 255, 0.02)
+    );
+}
+
+.work-planner-summary span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--kt-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.work-planner-summary strong {
+  display: block;
+  color: var(--kt-text);
+  font-size: 1.15rem;
+}
+
+@media (max-width: 760px) {
+  .work-planner-summary {
+    grid-template-columns: 1fr;
+  }
+}

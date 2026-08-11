@@ -93,6 +93,7 @@ export default function TradieDashboard({
   const [requestFilter, setRequestFilter] = useState("all");
   const [dashboardFocus, setDashboardFocus] = useState("");
   const [completionId, setCompletionId] = useState(null);
+  const [workPlanSort, setWorkPlanSort] = useState("recommended");
 
   const safeJobs = Array.isArray(jobs) ? jobs : [];
   const safeQuotes = Array.isArray(myQuotes) ? myQuotes : [];
@@ -148,6 +149,85 @@ export default function TradieDashboard({
 
   const completedCount =
     completedQuoteJobs.length + completedDirectJobsAll.length;
+
+    const acceptedQuoteValue = acceptedQuoteJobs.reduce(
+  (total, item) => total + (Number(item.quote?.price_eur) || 0),
+  0
+);
+
+const urgencyRank = {
+  ASAP: 4,
+  "This week": 3,
+  "This month": 2,
+  Flexible: 1
+};
+
+function preferredDateValue(item) {
+  const value = item.post?.preferred_date;
+
+  if (!value) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  return Number.isFinite(timestamp)
+    ? timestamp
+    : Number.MAX_SAFE_INTEGER;
+}
+
+function createdAtValue(item) {
+  const timestamp = new Date(item.quote?.created_at || 0).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+const plannedQuoteJobs = [...acceptedQuoteJobs].sort((a, b) => {
+  const aPrice = Number(a.quote?.price_eur) || 0;
+  const bPrice = Number(b.quote?.price_eur) || 0;
+
+  if (workPlanSort === "highest_value") {
+    return bPrice - aPrice;
+  }
+
+  if (workPlanSort === "smaller_first") {
+    return aPrice - bPrice;
+  }
+
+  if (workPlanSort === "urgent_first") {
+    const urgencyDifference =
+      (urgencyRank[b.post?.urgency] || 0) -
+      (urgencyRank[a.post?.urgency] || 0);
+
+    if (urgencyDifference !== 0) {
+      return urgencyDifference;
+    }
+
+    return preferredDateValue(a) - preferredDateValue(b);
+  }
+
+  if (workPlanSort === "newest") {
+    return createdAtValue(b) - createdAtValue(a);
+  }
+
+  // Recommended:
+  // urgency first, then preferred date, then higher-value work.
+  const urgencyDifference =
+    (urgencyRank[b.post?.urgency] || 0) -
+    (urgencyRank[a.post?.urgency] || 0);
+
+  if (urgencyDifference !== 0) {
+    return urgencyDifference;
+  }
+
+  const dateDifference =
+    preferredDateValue(a) - preferredDateValue(b);
+
+  if (dateDifference !== 0) {
+    return dateDifference;
+  }
+
+  return bPrice - aPrice;
+});
 
   const filteredRequests =
     dashboardFocus === "needs_attention"
@@ -205,29 +285,45 @@ export default function TradieDashboard({
 
     setCompletionId(quote.id);
 
-    const nextStatus = isAccepted
-      ? "cancelled"
-      : "rescinded";
-
-    const { error: quoteError } = await supabase
-      .from("job_quotes")
-      .update({ status: nextStatus })
-      .eq("id", quote.id);
-
-    let postError = null;
-
-    if (isAccepted && quote.job_post_id && !quoteError) {
-      const result = await supabase
-        .from("job_posts")
-        .update({
-          status: "open",
-          accepted_quote_id: null,
-          accepted_tradesperson_id: null
-        })
-        .eq("id", quote.job_post_id);
-
-      postError = result.error;
+if (isAccepted) {
+  const { error } = await supabase.rpc(
+    "cancel_accepted_job_quote",
+    {
+      p_quote_id: quote.id
     }
+  );
+
+  setCompletionId(null);
+
+  if (error) {
+    setMessage(error.message);
+    return;
+  }
+
+  setMessage(
+    "Job cancelled. The customer can now choose another quote."
+  );
+
+  loadPrivateData?.();
+  loadPublicData?.();
+  return;
+}
+
+const { error } = await supabase
+  .from("job_quotes")
+  .update({ status: "rescinded" })
+  .eq("id", quote.id);
+
+setCompletionId(null);
+
+if (error) {
+  setMessage(error.message);
+  return;
+}
+
+setMessage("Quote rescinded.");
+loadPrivateData?.();
+loadPublicData?.();
 
     setCompletionId(null);
 
@@ -246,38 +342,29 @@ export default function TradieDashboard({
     loadPublicData?.();
   }
 
-  async function markQuoteJobCompleted(item) {
-    if (!item?.quote?.id) return;
+async function markQuoteJobCompleted(item) {
+  if (!item?.quote?.id) return;
 
-    setCompletionId(item.quote.id);
+  setCompletionId(item.quote.id);
 
-    const { error: quoteError } = await supabase
-      .from("job_quotes")
-      .update({ status: "completed" })
-      .eq("id", item.quote.id);
-
-    let postError = null;
-
-    if (!quoteError && item.post?.id) {
-      const result = await supabase
-        .from("job_posts")
-        .update({ status: "completed" })
-        .eq("id", item.post.id);
-
-      postError = result.error;
+  const { error } = await supabase.rpc(
+    "complete_accepted_job_quote",
+    {
+      p_quote_id: item.quote.id
     }
+  );
 
-    setCompletionId(null);
+  setCompletionId(null);
 
-    if (quoteError || postError) {
-      setMessage((quoteError || postError).message);
-      return;
-    }
-
-    setMessage("Job completed.");
-    loadPrivateData?.();
-    loadPublicData?.();
+  if (error) {
+    setMessage(error.message);
+    return;
   }
+
+  setMessage("Job completed.");
+  loadPrivateData?.();
+  loadPublicData?.();
+}
 
   function QuoteJobCard({
     item,
@@ -562,17 +649,76 @@ export default function TradieDashboard({
             })}
           </ActionSection>
 
-          <ActionSection
-            icon={<CheckCircle />}
-            title="Accepted jobs"
-            subtitle="Customer-approved quote jobs and accepted direct bookings."
-          >
+<ActionSection
+  icon={<CheckCircle />}
+  title="Accepted jobs"
+  subtitle="Customer-approved quote jobs and accepted direct bookings."
+  filter={
+    acceptedQuoteJobs.length > 1 ? (
+      <label className="filter-select">
+        <span>Work order</span>
+
+        <select
+          value={workPlanSort}
+          onChange={(event) =>
+            setWorkPlanSort(event.target.value)
+          }
+        >
+          <option value="recommended">
+            Recommended
+          </option>
+
+          <option value="urgent_first">
+            Urgent first
+          </option>
+
+          <option value="highest_value">
+            Highest value
+          </option>
+
+          <option value="smaller_first">
+            Smaller jobs first
+          </option>
+
+          <option value="newest">
+            Newest quote first
+          </option>
+        </select>
+      </label>
+    ) : null
+  }
+  
+>
+  {acceptedCount > 0 && (
+  <div className="work-planner-summary">
+    <div>
+      <span>Active workload</span>
+
+      <strong>
+        {acceptedCount} job
+        {acceptedCount === 1 ? "" : "s"}
+      </strong>
+    </div>
+
+    <div>
+      <span>Confirmed quote value</span>
+
+      <strong>
+        {new Intl.NumberFormat("en-IE", {
+          style: "currency",
+          currency: "EUR",
+          maximumFractionDigits: 0
+        }).format(acceptedQuoteValue)}
+      </strong>
+    </div>
+  </div>
+)}
             {acceptedQuoteJobs.length === 0 &&
               acceptedDirectJobsAll.length === 0 && (
                 <Empty text="No accepted jobs yet." />
               )}
 
-            {acceptedQuoteJobs.map((item) => (
+{plannedQuoteJobs.map((item) => (
               <QuoteJobCard
                 key={`quote-${item.quote.id}`}
                 item={item}
