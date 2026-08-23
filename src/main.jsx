@@ -1956,8 +1956,17 @@ if (cancelError) {
       : quote;
   });
 
-const pendingQuotes = qlist.filter((q) => q.status === "pending");
-const acceptedQuotes = qlist.filter((q) => q.status === "accepted");
+const pendingQuotes = qlist.filter(
+  (q) => q.status === "pending"
+);
+
+const acceptedQuotes = qlist.filter(
+  (q) => q.status === "accepted"
+);
+
+const completedQuotes = qlist.filter(
+  (q) => q.status === "completed"
+);
 
 const declinedQuotes = qlist.filter(
   (q) =>
@@ -1967,38 +1976,76 @@ const declinedQuotes = qlist.filter(
 );
 
 const activeQuotes = qlist.filter(
-  (q) => q.status === "pending" || q.status === "accepted"
+  (q) =>
+    q.status === "pending" ||
+    q.status === "accepted"
 );
 
-  const acceptedQuote = recentlyAcceptedQuote || acceptedQuotes[0] || null;
-  const acceptedTradie = acceptedQuote ? tradespeople.find(t => t.id === acceptedQuote.tradesperson_id) : null;
-  const acceptedTradieName = acceptedTradie?.business_name || acceptedTradie?.contact_name || "Tradesperson";
+const acceptedQuote =
+  recentlyAcceptedQuote ||
+  acceptedQuotes[0] ||
+  null;
 
-  const filteredQuotes =
-    quoteFilter === "active" ? activeQuotes :
-    quoteFilter === "pending" ? pendingQuotes :
-    quoteFilter === "accepted" ? acceptedQuotes :
-    quoteFilter === "declined" ? declinedQuotes :
-    qlist;
-    const currentTradie = tradespeople.find(
+const completedQuote =
+  completedQuotes[0] ||
+  null;
+
+const winningQuote =
+  acceptedQuote ||
+  completedQuote ||
+  null;
+
+const acceptedTradie = winningQuote
+  ? tradespeople.find(
+      (t) => t.id === winningQuote.tradesperson_id
+    )
+  : null;
+
+const acceptedTradieName =
+  acceptedTradie?.business_name ||
+  acceptedTradie?.contact_name ||
+  "Tradesperson";
+
+const filteredQuotes =
+  quoteFilter === "active"
+    ? activeQuotes
+    : quoteFilter === "pending"
+      ? pendingQuotes
+      : quoteFilter === "accepted"
+        ? [...acceptedQuotes, ...completedQuotes]
+        : quoteFilter === "declined"
+          ? declinedQuotes
+          : qlist;
+
+const currentTradie = tradespeople.find(
   (tradie) => tradie.user_id === profile.id
 );
 
 const currentTradieId =
-  currentTradie?.id || recentlySubmittedQuote?.tradesperson_id || null;
+  currentTradie?.id ||
+  recentlySubmittedQuote?.tradesperson_id ||
+  null;
 
 const myQuotes = currentTradieId
-  ? qlist.filter((quote) => quote.tradesperson_id === currentTradieId)
+  ? qlist.filter(
+      (quote) =>
+        quote.tradesperson_id === currentTradieId
+    )
   : [];
 
 const myActiveQuote =
   myQuotes.find(
     (quote) =>
       quote.status === "pending" ||
-      quote.status === "accepted"
+      quote.status === "accepted" ||
+      quote.status === "completed"
   ) || null;
 
-const isCustomer = profile.role === "customer";
+const isCustomer =
+  profile.role === "customer";
+
+const isCompletedJob =
+  jobPost.status === "completed";
 const messageList = messagesFor(jobPost.id) || [];
 
 function messageSenderLabel(message) {
@@ -2013,47 +2060,66 @@ function scrollToWorkspaceSection(sectionId) {
   });
 }
 
-const nextAction = isCustomer
-  ? acceptedQuote
-    ? {
-        eyebrow: "Your next step",
-        title: "Arrange the job with your tradesperson",
-        text: "Confirm the date, access and final details in the job conversation.",
-        button: "Open job chat",
-        target: "workspace-conversation"
-      }
-    : qlist.length > 0
+const nextAction = isCompletedJob
+  ? {
+      eyebrow: "Job completed",
+      title: "This job has been completed",
+      text: "The completed quote and conversation remain available for your records.",
+      button: "View conversation",
+      target: "workspace-conversation"
+    }
+  : isCustomer
+    ? acceptedQuote
       ? {
           eyebrow: "Your next step",
-          title: "Compare your quotes",
-          text: "Review the prices and messages, then accept the quote that suits you best.",
-          button: "Review quotes",
-          target: "workspace-quotes"
+          title: "Arrange the job with your tradesperson",
+          text: "Confirm the date, access and final details in the job conversation.",
+          button: "Open job chat",
+          target: "workspace-conversation"
+        }
+      : qlist.length > 0
+        ? {
+            eyebrow: "Your next step",
+            title: "Compare your quotes",
+            text: "Review the prices and messages, then accept the quote that suits you best.",
+            button: "Review quotes",
+            target: "workspace-quotes"
+          }
+        : {
+            eyebrow: "Current status",
+            title: "Waiting for tradespeople to quote",
+            text: "Your job is live. New quotes will appear here as soon as they arrive.",
+            button: "View job details",
+            target: "workspace-job-details"
+          }
+    : myActiveQuote
+      ? {
+          eyebrow:
+            myActiveQuote.status === "completed"
+              ? "Job completed"
+              : "Your next step",
+          title:
+            myActiveQuote.status === "completed"
+              ? "This job has been completed"
+              : myActiveQuote.status === "accepted"
+                ? "Arrange the job details"
+                : "Stay available for questions",
+          text:
+            myActiveQuote.status === "completed"
+              ? "Your completed quote remains available as part of the job record."
+              : myActiveQuote.status === "accepted"
+                ? "Use the conversation to agree the date, access and final details."
+                : "The customer is reviewing your quote. You can answer questions in the conversation.",
+          button: "Open conversation",
+          target: "workspace-conversation"
         }
       : {
-          eyebrow: "Current status",
-          title: "Waiting for tradespeople to quote",
-          text: "Your job is live. New quotes will appear here as soon as they arrive.",
-          button: "View job details",
-          target: "workspace-job-details"
-        }
-  : myActiveQuote
-    ? {
-        eyebrow: "Your next step",
-        title: myActiveQuote.status === "accepted" ? "Arrange the job details" : "Stay available for questions",
-        text: myActiveQuote.status === "accepted"
-          ? "Use the conversation to agree the date, access and final details."
-          : "The customer is reviewing your quote. You can answer questions in the conversation.",
-        button: "Open conversation",
-        target: "workspace-conversation"
-      }
-    : {
-        eyebrow: "Your next step",
-        title: "Send a clear quote",
-        text: "Add your price and a short message explaining what is included.",
-        button: "Create quote",
-        target: "workspace-quote-composer"
-      };
+          eyebrow: "Your next step",
+          title: "Send a clear quote",
+          text: "Add your price and a short message explaining what is included.",
+          button: "Create quote",
+          target: "workspace-quote-composer"
+        };
 
   return <section>
     <div className="action-header">
@@ -2116,19 +2182,23 @@ const nextAction = isCustomer
 
           {myActiveQuote.note && <p>{myActiveQuote.note}</p>}
 
-          <SmartActionNotice
-            type="info"
-            title={
-              myActiveQuote.status === "accepted"
-                ? "Quote accepted"
-                : "Waiting for customer"
-            }
-            text={
-              myActiveQuote.status === "accepted"
-                ? "Use the conversation below to arrange the job."
-                : "Your quote has been sent. Quote revisions will be added in the next stage."
-            }
-          />
+<SmartActionNotice
+  type="info"
+  title={
+    myActiveQuote.status === "completed"
+      ? "Job completed"
+      : myActiveQuote.status === "accepted"
+        ? "Quote accepted"
+        : "Waiting for customer"
+  }
+  text={
+    myActiveQuote.status === "completed"
+      ? "This quote is retained as part of the completed job record."
+      : myActiveQuote.status === "accepted"
+        ? "Use the conversation below to arrange the job."
+        : "Your quote has been sent. Quote revisions will be added in the next stage."
+  }
+/>
         </>
       ) : (
         <form onSubmit={submitQuote} className="quote-form">
@@ -2330,27 +2400,48 @@ const nextAction = isCustomer
   <div className="workspace-conversation-layout">
     <div id="workspace-conversation" className="side-card workspace-conversation">
       <div className="workspace-section-head">
-        <div>
-          <span className="label">Conversation</span>
-          <h3>{acceptedQuote ? "Job chat" : "Questions and messages"}</h3>
-        </div>
+  <div>
+    <span className="label">Conversation</span>
+    <h3>
+      {isCompletedJob
+        ? "Completed job conversation"
+        : acceptedQuote
+          ? "Job chat"
+          : "Questions and messages"}
+    </h3>
+  </div>
 
-        <Status status={acceptedQuote ? "quote_accepted" : jobPost.status} />
-      </div>
+  <Status
+    status={
+      isCompletedJob
+        ? "completed"
+        : acceptedQuote
+          ? "quote_accepted"
+          : jobPost.status
+    }
+  />
+</div>
 
-      <div className="chat-guidance">
-        <strong>
-          {acceptedQuote ? "Arrange the job details" : "Discuss the job"}
-        </strong>
+<div className="chat-guidance">
+  <strong>
+    {isCompletedJob
+      ? "Job completed"
+      : acceptedQuote
+        ? "Arrange the job details"
+        : "Discuss the job"}
+  </strong>
 
-        <span>
-          {acceptedQuote
-            ? "Confirm the date, time, access arrangements and payment expectations before work starts."
-            : "Ask questions and clarify the scope before a quote is accepted."}
-        </span>
-      </div>
+  <span>
+    {isCompletedJob
+      ? "This conversation is retained as part of the completed job record."
+      : acceptedQuote
+        ? "Confirm the date, time, access arrangements and payment expectations before work starts."
+        : "Ask questions and clarify the scope before a quote is accepted."}
+  </span>
+</div>
 
-      <div className="quick-chat-prompts">
+{!isCompletedJob && (
+  <div className="quick-chat-prompts">
         <button
           type="button"
           onClick={(e) => {
@@ -2400,6 +2491,7 @@ const nextAction = isCustomer
           Thanks
         </button>
       </div>
+      )}
 
       <div className="messages workspace-messages" aria-live="polite">
         {messageList.length === 0 && (
@@ -2488,39 +2580,51 @@ const nextAction = isCustomer
           </div>
         </div>
 
-        <div
-          className={`workspace-timeline-item ${
-            acceptedQuote ? "complete" : qlist.length > 0 ? "current" : ""
-          }`}
-        >
-          <span className="workspace-timeline-marker" />
+<div
+  className={`workspace-timeline-item ${
+    winningQuote
+      ? "complete"
+      : qlist.length > 0
+        ? "current"
+        : ""
+  }`}
+>
+  <span className="workspace-timeline-marker" />
 
-          <div>
-            <strong>Quote accepted</strong>
-            <span>
-              {acceptedQuote
-                ? "A tradesperson has been selected"
-                : "No quote has been accepted yet"}
-            </span>
-          </div>
-        </div>
+  <div>
+    <strong>Quote accepted</strong>
+    <span>
+      {winningQuote
+        ? "A tradesperson was selected"
+        : "No quote has been accepted yet"}
+    </span>
+  </div>
+</div>
 
-        <div
-          className={`workspace-timeline-item ${
-            acceptedQuote ? "current" : ""
-          }`}
-        >
-          <span className="workspace-timeline-marker" />
+<div
+  className={`workspace-timeline-item ${
+    isCompletedJob
+      ? "complete"
+      : acceptedQuote
+        ? "current"
+        : ""
+  }`}
+>
+  <span className="workspace-timeline-marker" />
 
-          <div>
-            <strong>Job arranged</strong>
-            <span>
-              {acceptedQuote
-                ? "Confirm the final details in the conversation"
-                : "Available after accepting a quote"}
-            </span>
-          </div>
-        </div>
+  <div>
+    <strong>
+      {isCompletedJob ? "Job completed" : "Job arranged"}
+    </strong>
+    <span>
+      {isCompletedJob
+        ? "Work has been marked complete"
+        : acceptedQuote
+          ? "Confirm the final details in the conversation"
+          : "Available after accepting a quote"}
+    </span>
+  </div>
+</div>
       </div>
     </aside>
   </div>
