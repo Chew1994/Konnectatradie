@@ -4504,6 +4504,23 @@ input[type="file"]::file-selector-button:hover{
   gap:10px;
 }
 
+.skip-link {
+  position:fixed;
+  top:10px;
+  left:10px;
+  z-index:10000;
+  padding:10px 14px;
+  border-radius:10px;
+  background:#ffffff;
+  color:#17202b;
+  font-weight:900;
+  transform:translateY(-160%);
+}
+
+.skip-link:focus {
+  transform:translateY(0);
+}
+
 .side-card .field input:disabled,
 .side-card .field select:disabled,
 .side-card .field textarea:disabled {

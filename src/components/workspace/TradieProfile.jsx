@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BadgeCheck, Star } from "lucide-react";
 import { Empty } from "./JobWorkspaceComponents";
 
@@ -17,6 +17,17 @@ export default function TradieProfile({
     (a, b) =>
       new Date(b.created_at || 0) - new Date(a.created_at || 0)
   );
+
+  useEffect(() => {
+    if (activePhotoIndex === null) return undefined;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setActivePhotoIndex(null);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activePhotoIndex]);
 
   function openBooking() {
     setSelectedTradie(tradie);
@@ -226,6 +237,7 @@ export default function TradieProfile({
           className="customer-photo-lightbox"
           role="dialog"
           aria-modal="true"
+          aria-label="Portfolio photo viewer"
         >
           <button
             className="gallery-close"

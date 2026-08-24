@@ -296,6 +296,7 @@ function App() {
   const goPostJob = () => session ? setTab("post-job") : setTab("auth");
 
   return <div>
+    <a className="skip-link" href="#main-content">Skip to main content</a>
     <header className={`nav ${mobileMenuOpen ? "nav-open" : ""}`}>
       <button className="logo" onClick={() => goTab("home")}><span className="logo-mark"><Hammer size={20}/></span> KonnectATradie</button>
 
@@ -310,7 +311,7 @@ function App() {
         {mobileMenuOpen ? <X size={24}/> : <Menu size={24}/>}
       </button>
 
-      <div className="nav-links" id="primary-navigation">
+      <nav className="nav-links" id="primary-navigation" aria-label="Primary navigation">
         <button onClick={() => goTab("search")}>Find a Tradie</button>
         {session && <button onClick={() => goTab("dashboard")}>Dashboard</button>}
         {session && (
@@ -332,7 +333,7 @@ function App() {
         {profile?.role === "admin" && <button onClick={() => goTab("admin")}>Admin</button>}
         {session && <button onClick={() => goTab("about")}>About</button>}
         {session ? <button onClick={signOut}><LogOut size={16}/> Sign out</button> : <button className="nav-primary" onClick={() => goTab("auth")}>Login / Sign up</button>}
-      </div>
+      </nav>
     </header>
     <SuccessMessagePopup message={message} clearMessage={() => setMessage("")} />
     <AccountConfirmedModal open={accountConfirmOpen} />
@@ -341,7 +342,7 @@ function App() {
     {tab === "home" && <Home setTab={setTab} goPostJob={goPostJob} />}
     {message && <div className="toast">{message}</div>}
 
-    <main className="container">
+    <main className="container" id="main-content" tabIndex="-1">
       {session && <NotificationStrip profile={profile} myPosts={jobPosts.filter(j => j.customer_id === profile?.id)} myQuotes={["tradesperson","tradie"].includes(profile?.role) ? quotes.filter(q => q.tradesperson_id === myTradie?.id) : quotes} jobs={jobs} messages={messages} jobPosts={jobPosts} setSelectedJobPost={openJobWorkspace} setTab={goTab} />}
       {tab === "auth" && <Auth setTab={setTab} setMessage={setMessage} setAccountConfirmOpen={setAccountConfirmOpen} />}
       {tab === "about" && <AboutUs setTab={setTab} profile={profile} />}
@@ -810,8 +811,8 @@ function Auth({
           {showAccountRecovery && <div className="account-recovery-box">
             <strong>Recover your login email</strong>
             <p>Enter the name and phone number used when the account was created. A reminder will be sent to the registered email address.</p>
-            <input value={recoveryName} onChange={(e) => setRecoveryName(e.target.value)} placeholder="Full name"/>
-            <input value={recoveryPhone} onChange={(e) => setRecoveryPhone(e.target.value)} placeholder="Phone number"/>
+            <Input label="Full name" value={recoveryName} onChange={(e) => setRecoveryName(e.target.value)} autoComplete="name"/>
+            <Input label="Phone number" value={recoveryPhone} onChange={(e) => setRecoveryPhone(e.target.value)} autoComplete="tel"/>
             <button type="button" className="secondary full" disabled={authBusy} onClick={recoverLoginEmail}>Send login reminder</button>
           </div>}
           <button type="button" className="secondary full google-btn" disabled={authBusy} onClick={continueWithGoogle}>
@@ -1120,7 +1121,7 @@ function AccountConfirmedModal({ open }) {
   if (!open) return null;
 
   return (
-    <div className="account-confirm-overlay">
+    <div className="account-confirm-overlay" role="status" aria-live="polite" aria-atomic="true">
       <div className="account-confirm-modal">
         <div className="account-confirm-check"><CheckCircle size={42}/></div>
         <h2>Account confirmed</h2>
@@ -1200,7 +1201,7 @@ function SuccessMessagePopup({ message, clearMessage }) {
   if (!title) return null;
 
   return (
-    <div className="success-popup-overlay">
+    <div className="success-popup-overlay" role="status" aria-live="polite" aria-atomic="true">
       <div className="success-popup-box">
         <div className="success-popup-check"><CheckCircle size={42}/></div>
         <h2>{title}</h2>

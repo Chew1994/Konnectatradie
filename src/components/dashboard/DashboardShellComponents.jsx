@@ -174,8 +174,8 @@ export function MessengerPopup({ profile, messages = [], jobPosts = [], setSelec
 
   const post = jobPosts.find(j => j.id === latest.job_post_id);
 
-  return <div className="messenger-popup">
-    <button className="messenger-close" onClick={() => { localStorage.setItem(storageKey, latest.id); setDismissedId(latest.id); }}>×</button>
+  return <div className="messenger-popup" role="status" aria-live="polite">
+    <button type="button" className="messenger-close" aria-label="Dismiss new message notification" onClick={() => { localStorage.setItem(storageKey, latest.id); setDismissedId(latest.id); }}>×</button>
     <div className="messenger-dot"><MessageCircle size={18}/></div>
     <div>
       <strong>New message</strong>

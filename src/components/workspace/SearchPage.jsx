@@ -68,7 +68,8 @@ export default function SearchPage({
               tabIndex={0}
               onClick={openProfile}
               onKeyDown={(event) => {
-                if (event.key === "Enter") {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
                   openProfile();
                 }
               }}
