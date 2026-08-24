@@ -4344,3 +4344,15 @@ input[type="file"]::file-selector-button:hover{
   }
 }
 
+/* Review history sits on a dark dashboard card. Keep all copy readable. */
+.customer-reviews-card .submitted-reviews-heading strong,
+.customer-reviews-card .submitted-review-header strong,
+.customer-reviews-card .submitted-review-comment {
+  color: var(--kt-text) !important;
+}
+
+.customer-reviews-card .submitted-reviews-heading span,
+.customer-reviews-card .submitted-review-date {
+  color: var(--kt-text-secondary) !important;
+}
+
