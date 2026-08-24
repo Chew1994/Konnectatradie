@@ -4366,3 +4366,14 @@ input[type="file"]::file-selector-button:hover{
   color: var(--kt-text-secondary) !important;
 }
 
+/* Confirmation popups use white surfaces, so override the dark-theme type. */
+.success-popup-box h2,
+.account-confirm-modal h2 {
+  color:#17202b !important;
+}
+
+.success-popup-box p,
+.account-confirm-modal p {
+  color:#526071 !important;
+}
+
