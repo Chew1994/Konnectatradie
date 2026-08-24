@@ -15,6 +15,8 @@ export function TradieForm({
 }) {
   const [tradie, setTradie] = useState(null);
   const [photos, setPhotos] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
 useEffect(() => {
   if (userId) {
@@ -30,6 +32,7 @@ useEffect(() => {
       .maybeSingle();
 
     setTradie(data);
+    setIsEditing(!data);
 
     if (data) {
       const { data: pics } = await supabase
@@ -44,6 +47,11 @@ useEffect(() => {
 
   async function submit(event) {
     event.preventDefault();
+
+    if (tradie && !isEditing) {
+      setIsEditing(true);
+      return;
+    }
 
     const form = new FormData(event.currentTarget);
 
@@ -60,14 +68,11 @@ useEffect(() => {
       licence_number: form.get("licence_number"),
       insurance_expiry: form.get("insurance_expiry") || null,
       public_liability_insurance:
-        form.get("public_liability_insurance") === "on",
-      approval_status: tradie?.approval_status || "pending",
-      approved: tradie?.approved || false,
-      verification_status:
-        tradie?.verification_status || "pending"
+        form.get("public_liability_insurance") === "on"
     };
 
     let savedTradie = tradie;
+    setIsSaving(true);
 
     if (tradie) {
       const { data, error } = await supabase
@@ -78,6 +83,7 @@ useEffect(() => {
         .single();
 
       if (error) {
+        setIsSaving(false);
         setMessage(error.message);
         return;
       }
@@ -91,6 +97,7 @@ useEffect(() => {
         .single();
 
       if (error) {
+        setIsSaving(false);
         setMessage(error.message);
         return;
       }
@@ -142,6 +149,8 @@ useEffect(() => {
 
     await load();
     await loadPublicData();
+    setIsSaving(false);
+    setIsEditing(false);
   }
 
   async function deletePhoto(photo) {
@@ -162,7 +171,7 @@ useEffect(() => {
 
   return (
 <form
-  key={tradie?.id || "new-tradie"}
+  key={`${tradie?.id || "new-tradie"}-${isEditing ? "edit" : "view"}`}
   className="side-card"
   onSubmit={submit}
 >
@@ -192,18 +201,21 @@ useEffect(() => {
         name="business_name"
         defaultValue={tradie?.business_name || ""}
         required
+        disabled={!isEditing}
       />
 
       <Input
         label="Contact name"
         name="contact_name"
         defaultValue={tradie?.contact_name || ""}
+        disabled={!isEditing}
       />
 
       <Input
         label="Phone"
         name="phone"
         defaultValue={tradie?.phone || ""}
+        disabled={!isEditing}
       />
 
       <Select
@@ -212,6 +224,7 @@ useEffect(() => {
         defaultValue={tradie?.trade || ""}
         options={TRADES}
         required
+        disabled={!isEditing}
       />
 
       <Select
@@ -220,12 +233,14 @@ useEffect(() => {
         defaultValue={tradie?.county || ""}
         options={COUNTIES}
         required
+        disabled={!isEditing}
       />
 
       <Input
         label="Service area"
         name="service_area"
         defaultValue={tradie?.service_area || ""}
+        disabled={!isEditing}
       />
 
       <Select
@@ -233,12 +248,14 @@ useEffect(() => {
         name="availability"
         defaultValue={tradie?.availability || "Available"}
         options={["Available", "Busy", "Unavailable"]}
+        disabled={!isEditing}
       />
 
       <Input
         label="Licence / registration number"
         name="licence_number"
         defaultValue={tradie?.licence_number || ""}
+        disabled={!isEditing}
       />
 
       <Input
@@ -246,6 +263,7 @@ useEffect(() => {
         name="insurance_expiry"
         type="date"
         defaultValue={tradie?.insurance_expiry || ""}
+        disabled={!isEditing}
       />
 
       <label className="check-row">
@@ -255,6 +273,7 @@ useEffect(() => {
           defaultChecked={
             !!tradie?.public_liability_insurance
           }
+          disabled={!isEditing}
         />
         Public liability insurance held
       </label>
@@ -263,6 +282,7 @@ useEffect(() => {
         label="Bio"
         name="bio"
         defaultValue={tradie?.bio || ""}
+        disabled={!isEditing}
       />
 
       <div className="portfolio-upload">
@@ -274,7 +294,7 @@ useEffect(() => {
           type="file"
           accept="image/*"
           multiple
-          disabled={photos.length >= 5}
+          disabled={!isEditing || photos.length >= 5}
         />
 
         <div className="portfolio-grid">
@@ -288,6 +308,7 @@ useEffect(() => {
               <button
                 type="button"
                 onClick={() => deletePhoto(photo)}
+                disabled={!isEditing}
               >
                 Remove
               </button>
@@ -296,11 +317,24 @@ useEffect(() => {
         </div>
       </div>
 
-<button className="primary">
-  {tradie
-    ? "Edit business listing"
-    : "Save business listing"}
-</button>
+      <div className="business-form-actions">
+        {tradie && !isEditing ? (
+          <button type="button" className="primary" onClick={() => setIsEditing(true)}>
+            Edit business listing
+          </button>
+        ) : (
+          <>
+            <button className="primary" disabled={isSaving}>
+              {isSaving ? "Saving..." : tradie ? "Save changes" : "Save business listing"}
+            </button>
+            {tradie && (
+              <button type="button" className="secondary" disabled={isSaving} onClick={() => { setIsEditing(false); load(); }}>
+                Cancel
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </form>
   );
 }

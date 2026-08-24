@@ -123,7 +123,24 @@ function ReviewPrompt({ job, reviewed = false }) {
 }
 
 function JobPostCard({ job, quotesCount, onOpen, priority }) {
-  return <article className={`tight-card ${priority ? "priority" : ""}`}><div className="card-head"><div><h3>{job.job_title}</h3><p>{job.trade} · {job.county}</p></div><Status status={job.status}/></div><p className="truncate">{job.job_description}</p><div className="card-actions"><span className="chip">{quotesCount} quotes</span><button className="primary small-btn" onClick={onOpen}>View quotes & chat</button></div></article>;
+  function handleKeyDown(event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpen();
+    }
+  }
+
+  return <article
+    className={`tight-card dashboard-job-card ${priority ? "priority" : ""}`}
+    role="button"
+    tabIndex={0}
+    aria-label={`Open ${job.job_title || "posted job"}`}
+    onClick={(event) => {
+      if (event.target.closest("button, a, input, select, textarea")) return;
+      onOpen();
+    }}
+    onKeyDown={handleKeyDown}
+  ><div className="card-head"><div><h3>{job.job_title}</h3><p>{job.trade} · {job.county}</p></div><Status status={job.status}/></div><p className="truncate">{job.job_description}</p><div className="card-actions"><span className="chip">{quotesCount} quotes</span><button className="primary small-btn" onClick={onOpen}>View quotes & chat</button></div></article>;
 }
 
 function DirectJobCard({ job, setMessage, loadPrivateData, role = "tradesperson", reviewed = false, messages = [], profileId }) {

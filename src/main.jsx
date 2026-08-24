@@ -40,12 +40,14 @@ const BOOKING_FEE = 5;
 
 function readRoute() {
   const raw = window.location.hash.replace(/^#/, "");
-  const [tab = "home", jobId = ""] = raw.split("/");
-  return { tab: tab || "home", jobId: jobId || "" };
+  const [tab = "", routeId = ""] = raw.split("/");
+  return { tab, routeId };
 }
 
-function routeHash(tab, jobId = "") {
-  return tab === "job-chat" && jobId ? `#job-chat/${jobId}` : `#${tab}`;
+function routeHash(tab, routeId = "") {
+  return ["job-chat", "tradie-profile", "book"].includes(tab) && routeId
+    ? `#${tab}/${routeId}`
+    : `#${tab}`;
 }
 
 async function sendPlatformNotification(payload) {
@@ -75,7 +77,8 @@ function App() {
   const [profile, setProfile] = useState(null);
   const initialRoute = useMemo(() => readRoute(), []);
   const [tab, setTab] = useState(() => initialRoute.tab || localStorage.getItem("kta-current-tab") || "home");
-  const [selectedJobId, setSelectedJobId] = useState(() => initialRoute.jobId);
+  const [selectedJobId, setSelectedJobId] = useState(() => initialRoute.tab === "job-chat" ? initialRoute.routeId : "");
+  const [selectedTradieId, setSelectedTradieId] = useState(() => ["tradie-profile", "book"].includes(initialRoute.tab) ? initialRoute.routeId : "");
   const [message, setMessage] = useState("");
   const [accountConfirmOpen, setAccountConfirmOpen] = useState(false);
   const [tradespeople, setTradespeople] = useState([]);
@@ -104,13 +107,22 @@ function App() {
   useEffect(() => { if (profile) loadPrivateData(); }, [profile]);
   useEffect(() => {
     localStorage.setItem("kta-current-tab", tab);
-    const nextHash = routeHash(tab, selectedJobPost?.id || selectedJobId);
+    const routeId = tab === "job-chat"
+      ? selectedJobPost?.id || selectedJobId
+      : ["tradie-profile", "book"].includes(tab)
+        ? selectedTradie?.id || selectedTradieId
+        : "";
+    const nextHash = routeHash(tab, routeId);
     if (window.location.hash !== nextHash) window.history.replaceState(null, "", nextHash);
-  }, [tab, selectedJobPost?.id, selectedJobId]);
+  }, [tab, selectedJobPost?.id, selectedJobId, selectedTradie?.id, selectedTradieId]);
 
   useEffect(() => {
     if (selectedJobPost?.id) setSelectedJobId(String(selectedJobPost.id));
   }, [selectedJobPost?.id]);
+
+  useEffect(() => {
+    if (selectedTradie?.id) setSelectedTradieId(String(selectedTradie.id));
+  }, [selectedTradie?.id]);
 
   useEffect(() => {
     if (tab !== "job-chat" || !selectedJobId || selectedJobPost?.id) return;
@@ -119,11 +131,20 @@ function App() {
   }, [tab, selectedJobId, selectedJobPost?.id, jobPosts]);
 
   useEffect(() => {
+    if (!["tradie-profile", "book"].includes(tab) || !selectedTradieId || selectedTradie?.id) return;
+    const restoredTradie = tradespeople.find((tradie) => String(tradie.id) === String(selectedTradieId));
+    if (restoredTradie) setSelectedTradie(restoredTradie);
+  }, [tab, selectedTradieId, selectedTradie?.id, tradespeople]);
+
+  useEffect(() => {
     const handleHashChange = () => {
       const route = readRoute();
-      setTab(route.tab);
-      setSelectedJobId(route.jobId);
-      if (route.tab !== "job-chat") setSelectedJobPost(null);
+      const nextTab = route.tab || "home";
+      setTab(nextTab);
+      setSelectedJobId(nextTab === "job-chat" ? route.routeId : "");
+      setSelectedTradieId(["tradie-profile", "book"].includes(nextTab) ? route.routeId : "");
+      if (nextTab !== "job-chat") setSelectedJobPost(null);
+      if (!["tradie-profile", "book"].includes(nextTab)) setSelectedTradie(null);
     };
 
     window.addEventListener("hashchange", handleHashChange);
@@ -239,12 +260,20 @@ function App() {
       setSelectedJobPost(null);
       setSelectedJobId("");
     }
+    if (!["tradie-profile", "book"].includes(nextTab)) {
+      setSelectedTradie(null);
+      setSelectedTradieId("");
+    }
     setTab(nextTab);
     localStorage.setItem("kta-current-tab", nextTab);
-    const currentRouteJobId = readRoute().jobId;
+    const currentRouteId = readRoute().routeId;
     window.location.hash = routeHash(
       nextTab,
-      selectedJobPost?.id || selectedJobId || currentRouteJobId
+      nextTab === "job-chat"
+        ? selectedJobPost?.id || selectedJobId || currentRouteId
+        : ["tradie-profile", "book"].includes(nextTab)
+          ? selectedTradie?.id || selectedTradieId || currentRouteId
+          : ""
     );
     setMobileMenuOpen(false);
   }
@@ -341,6 +370,7 @@ function App() {
   </Suspense>
 )}
       {tab === "tradie-profile" && selectedTradie && <LazyTradieProfile tradie={selectedTradie} photos={photosFor(selectedTradie.id)} reviews={reviewsFor(selectedTradie.id)} avgRating={avgRating(selectedTradie.id)} setTab={setTab} setSelectedTradie={setSelectedTradie} />}
+      {tab === "tradie-profile" && !selectedTradie && selectedTradieId && <LoadingState title="Loading tradesperson…" text="We are restoring the profile you were viewing."/>}
       {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} reviews={reviews} messages={messages} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
       {tab === "messages" && session && (
   <ConversationsPage
@@ -366,7 +396,11 @@ function App() {
             onOpenJob={openJobWorkspace}
     />
   )}
-{tab === "book" && (session ? <Booking selectedTradie={selectedTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage} returnTab="book" />)}
+{tab === "book" && (session
+  ? selectedTradie
+    ? <Booking selectedTradie={selectedTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} />
+    : <LoadingState title="Loading booking…" text="We are restoring the tradesperson you selected."/>
+  : <Auth setTab={setTab} setMessage={setMessage} returnTab="book" />)}
       {tab === "post-job" && (session ? <PostJob profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={setTab} /> : <Auth setTab={setTab} setMessage={setMessage}/>)}
       {tab === "available-jobs" && ["tradesperson","tradie"].includes(profile?.role) && <AvailableJobs jobPosts={openJobPosts} myTradie={myTradie} profile={profile} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}
       {tab === "quotes-sent" && ["tradesperson","tradie"].includes(profile?.role) && <QuotesSentPage myTradie={myTradie} quotes={quotes} jobPosts={jobPosts} setMessage={setMessage} loadPrivateData={loadPrivateData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}
