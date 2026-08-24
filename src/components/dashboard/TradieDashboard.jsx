@@ -145,6 +145,10 @@ export default function TradieDashboard({
     (job) => lifecycleStatus(job) === "completed"
   );
 
+  const directRequestHistory = safeJobs.filter((job) =>
+    ["requested", "declined", "cancelled"].includes(lifecycleStatus(job))
+  );
+
   const acceptedCount =
     acceptedQuoteJobs.length + acceptedDirectJobsAll.length;
 
@@ -237,7 +241,7 @@ const plannedQuoteJobs = [...acceptedQuoteJobs].sort((a, b) => {
         ? acceptedDirectJobsAll
         : dashboardFocus === "completed"
           ? completedDirectJobsAll
-          : filterByStatus(safeJobs, requestFilter);
+          : filterByStatus(directRequestHistory, requestFilter);
 
   function applyDashboardFocus(focus) {
     setDashboardFocus(focus);
@@ -373,11 +377,29 @@ async function markQuoteJobCompleted(item) {
   }) {
     const { quote, post } = item;
 
+    function openJob() {
+      setSelectedJobPost(post);
+      setTab("job-chat");
+    }
+
     return (
       <article
-        className={`quote-job-card ${
+        className={`quote-job-card dashboard-job-card ${
           completed ? "completed" : ""
         }`}
+        role="button"
+        tabIndex={0}
+        aria-label={`Open ${post?.job_title || "accepted job"}`}
+        onClick={(event) => {
+          if (event.target.closest("button, a, input, select, textarea")) return;
+          openJob();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openJob();
+          }
+        }}
       >
         <div className="card-head">
           <div>
@@ -407,10 +429,7 @@ async function markQuoteJobCompleted(item) {
         <div className="quote-job-actions">
           <button
             className="secondary small-btn"
-            onClick={() => {
-              setSelectedJobPost(post);
-              setTab("job-chat");
-            }}
+            onClick={openJob}
           >
             Open chat
           </button>
@@ -779,18 +798,16 @@ async function markQuoteJobCompleted(item) {
           <ActionSection
             icon={<ClipboardCheck />}
             title="Direct requests"
-            subtitle="Full request history with filters."
+            subtitle="New and closed requests sent directly to you. Accepted work moves into Accepted jobs."
             filter={
               <StatusFilter
                 value={requestFilter}
                 onChange={setRequestFilter}
                 options={[
-                  ["all", "All direct requests"],
+                  ["all", "All requests"],
                   ["requested", "Requested"],
-                  ["accepted", "Accepted"],
-                  ["in_progress", "In progress"],
-                  ["completed", "Completed"],
-                  ["declined", "Declined"]
+                  ["declined", "Declined"],
+                  ["cancelled", "Cancelled"]
                 ]}
               />
             }

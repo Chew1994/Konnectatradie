@@ -4474,3 +4474,27 @@ input[type="file"]::file-selector-button:hover{
   }
 }
 
+/* Account-type cards use light surfaces, so their copy must remain dark. */
+.premium-auth-card .role-selection-hint strong,
+.premium-auth-card .role-selection-hint span {
+  color:#9a3412 !important;
+}
+
+.premium-auth-card .role-choice strong {
+  color:#17202b !important;
+}
+
+.premium-auth-card .role-choice span {
+  color:#526071 !important;
+}
+
+/* Accepted and completed dashboard cards are full-card navigation targets. */
+.dashboard-job-card {
+  cursor:pointer;
+}
+
+.dashboard-job-card:focus-visible {
+  outline:3px solid rgba(249,115,22,.72);
+  outline-offset:3px;
+}
+

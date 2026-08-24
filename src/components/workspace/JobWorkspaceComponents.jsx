@@ -210,7 +210,26 @@ fetch("/.netlify/functions/notify-booking-status", {
   const tradieActions = role === "tradesperson";
   const customerActions = role === "customer";
 
-  return <article className={`tight-card lifecycle-card ${status === "requested" ? "priority" : ""}`}>
+  function handleCardOpen(event) {
+    if (!chatAvailable) return;
+    if (event.target.closest("button, a, input, select, textarea, form, .direct-booking-chat")) return;
+    setChatOpen(true);
+  }
+
+  function handleCardKeyDown(event) {
+    if (!chatAvailable || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    setChatOpen(true);
+  }
+
+  return <article
+    className={`tight-card lifecycle-card ${status === "requested" ? "priority" : ""} ${chatAvailable ? "dashboard-job-card" : ""}`}
+    role={chatAvailable ? "button" : undefined}
+    tabIndex={chatAvailable ? 0 : undefined}
+    aria-label={chatAvailable ? `Open ${job.trade || "direct booking"}` : undefined}
+    onClick={handleCardOpen}
+    onKeyDown={handleCardKeyDown}
+  >
     <div className="card-head">
       <div>
         <h3>{job.trade || "Job request"}</h3>
