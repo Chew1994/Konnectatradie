@@ -4648,3 +4648,99 @@ input[type="file"]::file-selector-button:hover{
   }
 }
 
+/* Tradespeople can read and respond to their customer reviews. */
+.tradie-review-inbox {
+  display:grid;
+  gap:14px;
+}
+
+.tradie-review-item {
+  display:grid;
+  gap:14px;
+  padding:18px;
+  border:1px solid var(--kt-border);
+  border-radius:18px;
+  background:#1d232a;
+}
+
+.tradie-review-heading,
+.tradie-review-response-actions {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+}
+
+.tradie-review-heading > div {
+  display:grid;
+  gap:4px;
+}
+
+.tradie-review-heading time,
+.tradie-review-response-actions small {
+  color:var(--kt-text-muted);
+  font-size:12px;
+}
+
+.tradie-review-rating {
+  color:#fb923c;
+  letter-spacing:2px;
+  white-space:nowrap;
+}
+
+.tradie-review-comment {
+  margin:0;
+  line-height:1.6;
+  color:var(--kt-text-secondary) !important;
+}
+
+.tradie-review-response-field {
+  display:grid;
+  gap:8px;
+}
+
+.tradie-review-response-field > span {
+  color:var(--kt-text);
+  font-size:13px;
+  font-weight:850;
+}
+
+.tradie-review-response-field textarea {
+  resize:vertical;
+  color:var(--kt-text);
+  background:#161b21;
+  border-color:var(--kt-border);
+}
+
+.public-review-response {
+  display:grid;
+  gap:6px;
+  margin-top:14px;
+  padding:14px;
+  border-left:3px solid var(--kt-orange);
+  border-radius:4px 14px 14px 4px;
+  background:rgba(249,115,22,.09);
+}
+
+.public-review-response p {
+  margin:0;
+  color:var(--kt-text-secondary) !important;
+}
+
+.public-review-response time {
+  color:var(--kt-text-muted);
+  font-size:11px;
+}
+
+@media(max-width:640px) {
+  .tradie-review-heading,
+  .tradie-review-response-actions {
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .tradie-review-response-actions button {
+    width:100%;
+  }
+}
+

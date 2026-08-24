@@ -961,7 +961,7 @@ function Dashboard({ profile, session, setMessage, loadProfile, loadPublicData, 
 
   return normalisedRole === "customer"
     ? <CustomerDashboard profile={profile} setTab={setTab} posts={myPosts} jobs={safeJobs} reviews={reviews || []} messages={messages || []} quotesFor={safeQuotesFor} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData}/>
-    : <DashboardErrorBoundary setTab={setTab}><TradieDashboard profile={profile} userId={session?.user?.id} setTab={setTab} jobs={safeJobs} myQuotes={myQuotes} jobPosts={safeJobPosts} messages={messages || []} myTradie={myTradie} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, quotes: myQuotes.length, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData} documents={safeDocuments}/></DashboardErrorBoundary>;
+    : <DashboardErrorBoundary setTab={setTab}><TradieDashboard profile={profile} userId={session?.user?.id} setTab={setTab} jobs={safeJobs} myQuotes={myQuotes} jobPosts={safeJobPosts} messages={messages || []} reviews={reviews || []} myTradie={myTradie} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, quotes: myQuotes.length, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData} documents={safeDocuments}/></DashboardErrorBoundary>;
 }
 
 

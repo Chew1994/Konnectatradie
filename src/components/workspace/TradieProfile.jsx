@@ -204,6 +204,18 @@ export default function TradieProfile({
                   </div>
 
                   <p>{review.comment}</p>
+
+                  {review.tradesperson_response && (
+                    <div className="public-review-response">
+                      <strong>Response from {tradie.business_name}</strong>
+                      <p>{review.tradesperson_response}</p>
+                      {review.tradesperson_responded_at && (
+                        <time dateTime={review.tradesperson_responded_at}>
+                          {formatReviewDate(review.tradesperson_responded_at)}
+                        </time>
+                      )}
+                    </div>
+                  )}
                 </article>
               ))}
             </div>

@@ -4,6 +4,7 @@ import {
   CheckCircle,
   ClipboardCheck,
   Euro,
+  Star,
   Zap
 } from "lucide-react";
 
@@ -82,6 +83,7 @@ export default function TradieDashboard({
   myQuotes,
   jobPosts,
   messages = [],
+  reviews = [],
   myTradie,
   setSelectedJobPost,
   stats,
@@ -95,11 +97,43 @@ export default function TradieDashboard({
   const [dashboardFocus, setDashboardFocus] = useState("");
   const [completionId, setCompletionId] = useState(null);
   const [workPlanSort, setWorkPlanSort] = useState("recommended");
+  const [reviewDrafts, setReviewDrafts] = useState({});
+  const [reviewResponseId, setReviewResponseId] = useState(null);
 
   const safeJobs = Array.isArray(jobs) ? jobs : [];
   const safeQuotes = Array.isArray(myQuotes) ? myQuotes : [];
   const safeJobPosts = Array.isArray(jobPosts) ? jobPosts : [];
   const safeDocuments = Array.isArray(documents) ? documents : [];
+  const tradieReviews = (Array.isArray(reviews) ? reviews : [])
+    .filter((review) => String(review.tradesperson_id) === String(myTradie?.id))
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+  async function saveReviewResponse(review) {
+    const response = String(
+      reviewDrafts[review.id] ?? review.tradesperson_response ?? ""
+    ).trim();
+
+    if (!response || response.length > 1000) {
+      setMessage("Review responses must be between 1 and 1000 characters.");
+      return;
+    }
+
+    setReviewResponseId(review.id);
+    const { error } = await supabase.rpc("respond_to_review", {
+      p_review_id: review.id,
+      p_response: response
+    });
+    setReviewResponseId(null);
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    setReviewDrafts((current) => ({ ...current, [review.id]: response }));
+    setMessage(review.tradesperson_response ? "Review response updated." : "Review response published.");
+    await loadPublicData();
+  }
 
   const pendingJobs = safeJobs.filter(
     (job) => lifecycleStatus(job) === "requested"
@@ -793,6 +827,71 @@ async function markQuoteJobCompleted(item) {
                   loadPrivateData={loadPrivateData}
                 />
               ))}
+          </ActionSection>
+
+          <ActionSection
+            icon={<Star />}
+            title="Customer reviews"
+            subtitle="Read customer feedback and publish a professional response if you wish."
+          >
+            {tradieReviews.length === 0 && (
+              <Empty text="No customer reviews yet." />
+            )}
+
+            <div className="tradie-review-inbox">
+              {tradieReviews.map((review) => {
+                const draft = reviewDrafts[review.id] ?? review.tradesperson_response ?? "";
+                return (
+                  <article className="tradie-review-item" key={review.id}>
+                    <div className="tradie-review-heading">
+                      <div>
+                        <strong>Verified customer</strong>
+                        <time dateTime={review.created_at || undefined}>
+                          {review.created_at
+                            ? new Intl.DateTimeFormat("en-IE", { dateStyle: "medium" }).format(new Date(review.created_at))
+                            : "Review date unavailable"}
+                        </time>
+                      </div>
+                      <span className="tradie-review-rating" aria-label={`${review.rating} out of 5 stars`}>
+                        {"★".repeat(Math.max(0, Math.min(5, Number(review.rating) || 0)))}
+                      </span>
+                    </div>
+
+                    <p className="tradie-review-comment">{review.comment || "No written comment provided."}</p>
+
+                    <label className="tradie-review-response-field">
+                      <span>{review.tradesperson_response ? "Edit your public response" : "Write a public response (optional)"}</span>
+                      <textarea
+                        value={draft}
+                        maxLength={1000}
+                        rows={4}
+                        placeholder="Thank the customer or respond professionally to their feedback…"
+                        onChange={(event) => setReviewDrafts((current) => ({
+                          ...current,
+                          [review.id]: event.target.value
+                        }))}
+                      />
+                    </label>
+
+                    <div className="tradie-review-response-actions">
+                      <small>{draft.length}/1000 characters</small>
+                      <button
+                        type="button"
+                        className="primary"
+                        disabled={reviewResponseId === review.id || !draft.trim()}
+                        onClick={() => saveReviewResponse(review)}
+                      >
+                        {reviewResponseId === review.id
+                          ? "Saving…"
+                          : review.tradesperson_response
+                            ? "Update response"
+                            : "Publish response"}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </ActionSection>
 
           <ActionSection
