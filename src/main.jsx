@@ -372,7 +372,7 @@ function App() {
       {tab === "quotes-sent" && ["tradesperson","tradie"].includes(profile?.role) && <QuotesSentPage myTradie={myTradie} quotes={quotes} jobPosts={jobPosts} setMessage={setMessage} loadPrivateData={loadPrivateData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}
       {tab === "jobs-board" && session && <JobsBoard profile={profile} tradespeople={visibleTradies} jobPosts={openJobPosts} myTradie={myTradie} setSelectedTradie={setSelectedTradie} setSelectedJobPost={openJobWorkspace} setTab={setTab} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} />}
       {tab === "map" && session && <Suspense fallback={<LoadingState title="Loading map…" text="We are preparing the interactive map and nearby results."/>}><MapView profile={profile} tradespeople={visibleTradies} jobPosts={openJobPosts} setSelectedTradie={setSelectedTradie} setSelectedJobPost={openJobWorkspace} setTab={setTab} /></Suspense>}
-      {tab === "job-chat" && selectedJobPost && <JobChat jobPost={selectedJobPost} profile={profile} messagesFor={messagesFor} quotesFor={quotesFor} tradespeople={tradespeople} setMessage={setMessage} loadPrivateData={loadPrivateData} />}
+      {tab === "job-chat" && selectedJobPost && <JobChat jobPost={selectedJobPost} profile={profile} messagesFor={messagesFor} quotesFor={quotesFor} tradespeople={tradespeople} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={goTab} />}
       {tab === "job-chat" && !selectedJobPost && selectedJobId && !privateDataLoaded && <LoadingState title="Loading job workspace…" text="We are restoring the job, quotes and conversation from this link."/>}
       {tab === "job-chat" && !selectedJobPost && (privateDataLoaded || !selectedJobId) && <section className="card empty-state"><h2>Job not found</h2><p>This job could not be loaded. Return to your dashboard and open it again.</p><button className="primary" onClick={() => goTab("dashboard")}>Back to dashboard</button></section>}
       {tab === "admin" && profile?.role === "admin" && <Admin tradespeople={tradespeople} documents={documents} setMessage={setMessage} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData} />}
@@ -939,9 +939,17 @@ function CustomerDashboard({ profile, setTab, posts, jobs, quotesFor, setSelecte
   const [postFilter, setPostFilter] = useState("all");
   const [dashboardFocus, setDashboardFocus] = useState("");
 
-  const urgentPosts = posts.filter(p => quotesFor(p.id).some(q => q.status === "pending"));
-  const acceptedPosts = posts.filter(p => p.status === "quote_accepted");
-  const openQuotePosts = posts.filter(p => quotesFor(p.id).some(q => q.status === "pending"));
+const urgentPosts = posts.filter(
+  (p) =>
+    p.status === "open" &&
+    quotesFor(p.id).some((q) => q.status === "pending")
+);
+
+const acceptedPosts = posts.filter(
+  (p) => p.status === "quote_accepted"
+);
+
+const openQuotePosts = urgentPosts;
 
   const filteredPosts =
     dashboardFocus === "needs_attention" ? urgentPosts :
@@ -996,10 +1004,28 @@ function CustomerDashboard({ profile, setTab, posts, jobs, quotesFor, setSelecte
     <Stats
       activeKey={dashboardFocus}
       items={[
-        ["Needs attention", stats.action, <AlertTriangle/>, () => applyDashboardFocus("needs_attention"), "needs_attention"],
-        ["Accepted", stats.accepted, <CheckCircle/>, () => applyDashboardFocus("accepted"), "accepted"],
-        ["Open quotes", stats.pendingQuotes, <Euro/>, () => applyDashboardFocus("open_quotes"), "open_quotes"]
-      ]}
+  [
+    "Needs attention",
+    urgentPosts.length,
+    <AlertTriangle />,
+    () => applyDashboardFocus("needs_attention"),
+    "needs_attention"
+  ],
+  [
+    "Accepted",
+    acceptedPosts.length,
+    <CheckCircle />,
+    () => applyDashboardFocus("accepted"),
+    "accepted"
+  ],
+  [
+    "Open quotes",
+    openQuotePosts.length,
+    <Euro />,
+    () => applyDashboardFocus("open_quotes"),
+    "open_quotes"
+  ]
+]}
     />
     {dashboardFocus && <div className="active-filter-strip"><span>Filtered: {dashboardFocus === "needs_attention" ? "Needs attention" : dashboardFocus === "accepted" ? "Accepted" : "Open quotes"}</span><button className="secondary small-btn" onClick={clearDashboardFocus}>Clear filter</button></div>}
     <div className="action-layout">
@@ -1012,7 +1038,7 @@ function CustomerDashboard({ profile, setTab, posts, jobs, quotesFor, setSelecte
           />}
           {urgentPosts.map(p => <JobPostCard key={p.id} job={p} priority quotesCount={quotesFor(p.id).length} onOpen={() => {setSelectedJobPost(p); setTab("job-chat");}} />)}
         </ActionSection>
-        <ActionSection icon={<BriefcaseBusiness/>} title="Posted jobs" subtitle="Track quotes and conversations." filter={<StatusFilter value={postFilter} onChange={setPostFilter} options={[["all","All posted jobs"],["open","Open"],["quote_accepted","Quote accepted"],["declined","Declined"]]}/>}>
+        <ActionSection icon={<BriefcaseBusiness/>} title="Posted jobs" subtitle="Track quotes and conversations." filter={<StatusFilter value={postFilter} onChange={setPostFilter} options={[["all","All posted jobs"],["open","Open"],["quote_accepted","Quote accepted"],["completed","Completed"]]}/>}>
           {filteredPosts.length === 0 && (
             posts.length === 0
               ? <EmptyState
@@ -1034,7 +1060,13 @@ function CustomerDashboard({ profile, setTab, posts, jobs, quotesFor, setSelecte
       </div>
       <aside className="side-rail">
         <ProfileForm profile={profile} setMessage={setMessage} loadProfile={loadProfile}/>
-        <ReviewForm profile={profile} setMessage={setMessage} loadPublicData={loadPublicData}/>
+        <ReviewForm
+          profile={profile}
+          jobs={jobs}
+          jobPosts={posts}
+          setMessage={setMessage}
+          loadPublicData={loadPublicData}
+        />
       </aside>
     </div>
   </section>;
@@ -1640,7 +1672,7 @@ function AvailableJobs({ jobPosts, myTradie, profile, setMessage, loadPrivateDat
   </section>;
 }
 
-function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, setMessage, loadPrivateData }) {
+function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, setMessage, loadPrivateData, setTab }) {
   const [quoteActionId, setQuoteActionId] = useState(null);
   const [messageSending, setMessageSending] = useState(false);
   const [quoteFilter, setQuoteFilter] = useState("active");
@@ -2064,9 +2096,11 @@ const nextAction = isCompletedJob
   ? {
       eyebrow: "Job completed",
       title: "This job has been completed",
-      text: "The completed quote and conversation remain available for your records.",
-      button: "View conversation",
-      target: "workspace-conversation"
+      text: isCustomer
+        ? "The completed quote remains available, and you can now review your tradesperson."
+        : "The completed quote and conversation remain available for your records.",
+      button: isCustomer ? "Leave a review" : "View conversation",
+      target: isCustomer ? null : "workspace-conversation"
     }
   : isCustomer
     ? acceptedQuote
@@ -2143,7 +2177,19 @@ const nextAction = isCompletedJob
       <button
         type="button"
         className="primary"
-        onClick={() => scrollToWorkspaceSection(nextAction.target)}
+        onClick={() => {
+          if (isCompletedJob && isCustomer) {
+            setTab("dashboard");
+            setTimeout(() => {
+              document
+                .getElementById("customer-review-form")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 120);
+            return;
+          }
+
+          scrollToWorkspaceSection(nextAction.target);
+        }}
       >
         {nextAction.button}
       </button>

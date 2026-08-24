@@ -187,7 +187,22 @@ fetch("/.netlify/functions/notify-booking-status", {
 
       {tradieActions && status === "accepted" && <button className="primary small-btn" onClick={() => updateJob("in_progress")}>Start job</button>}
       {tradieActions && status === "in_progress" && <button className="primary small-btn" onClick={() => updateJob("completed")}>Mark complete</button>}
-      {customerActions && status === "completed" && <button className="secondary small-btn">Leave review below</button>}
+      {customerActions && status === "completed" && (
+        <button
+          type="button"
+          className="secondary small-btn"
+          onClick={() =>
+            document
+              .getElementById("customer-review-form")
+              ?.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+              })
+          }
+        >
+          Leave review below
+        </button>
+      )}
     </div>
   </article>;
 }
