@@ -1813,34 +1813,14 @@ async function submitQuote(e) {
     setQuoteActionId(q.id);
 
     try {
-     const { error: quoteError } = await supabase
-  .from("job_quotes")
-  .update({ status: "accepted" })
-  .eq("id", q.id);
+      const { error: acceptError } = await supabase.rpc("accept_job_quote", {
+        p_quote_id: q.id
+      });
 
-if (quoteError) {
-  setMessage(quoteError.message);
-  return;
-}
-
-const { error: postError } = await supabase
-  .from("job_posts")
-  .update({
-    status: "quote_accepted",
-    accepted_quote_id: q.id,
-    accepted_tradesperson_id: q.tradesperson_id
-  })
-  .eq("id", jobPost.id);
-
-if (postError) {
-  await supabase
-    .from("job_quotes")
-    .update({ status: "pending" })
-    .eq("id", q.id);
-
-  setMessage(postError.message);
-  return;
-}
+      if (acceptError) {
+        setMessage(acceptError.message);
+        return;
+      }
 
       const accepted = { ...q, status: "accepted" };
 
