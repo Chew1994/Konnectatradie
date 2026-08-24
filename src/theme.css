@@ -4356,3 +4356,13 @@ input[type="file"]::file-selector-button:hover{
   color: var(--kt-text-secondary) !important;
 }
 
+/* Review cards stay dark inside the otherwise light public profile panels. */
+.tradie-profile-page .reviews-panel .review-card .review-head strong,
+.tradie-profile-page .reviews-panel .review-card p {
+  color: var(--kt-text) !important;
+}
+
+.tradie-profile-page .reviews-panel .review-card .review-head span {
+  color: var(--kt-text-secondary) !important;
+}
+
