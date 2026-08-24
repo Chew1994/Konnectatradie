@@ -116,16 +116,16 @@ function BookingNotificationPanel({ jobs, role }) {
   </ActionSection>;
 }
 
-function ReviewPrompt({ job }) {
+function ReviewPrompt({ job, reviewed = false }) {
   if (lifecycleStatus(job) !== "completed") return null;
-  return <div className="review-prompt"><Star size={16}/> Job complete — customer can now leave a review.</div>;
+  return <div className="review-prompt"><Star size={16}/> {reviewed ? "Job complete — review submitted." : "Job complete — customer can now leave a review."}</div>;
 }
 
 function JobPostCard({ job, quotesCount, onOpen, priority }) {
   return <article className={`tight-card ${priority ? "priority" : ""}`}><div className="card-head"><div><h3>{job.job_title}</h3><p>{job.trade} · {job.county}</p></div><Status status={job.status}/></div><p className="truncate">{job.job_description}</p><div className="card-actions"><span className="chip">{quotesCount} quotes</span><button className="primary small-btn" onClick={onOpen}>View quotes & chat</button></div></article>;
 }
 
-function DirectJobCard({ job, setMessage, loadPrivateData, role = "tradesperson" }) {
+function DirectJobCard({ job, setMessage, loadPrivateData, role = "tradesperson", reviewed = false }) {
   const status = lifecycleStatus(job);
 
   async function updateJob(nextStatus) {
@@ -175,7 +175,7 @@ fetch("/.netlify/functions/notify-booking-status", {
 
     <p className="truncate">{job.job_description}</p>
     <LifecycleTimeline status={status}/>
-    <ReviewPrompt job={{...job, lifecycle_status: status}}/>
+    <ReviewPrompt job={{...job, lifecycle_status: status}} reviewed={reviewed}/>
 
     <div className="card-actions">
       <span className="chip orange">No booking fee during launch</span>
@@ -187,7 +187,10 @@ fetch("/.netlify/functions/notify-booking-status", {
 
       {tradieActions && status === "accepted" && <button className="primary small-btn" onClick={() => updateJob("in_progress")}>Start job</button>}
       {tradieActions && status === "in_progress" && <button className="primary small-btn" onClick={() => updateJob("completed")}>Mark complete</button>}
-      {customerActions && status === "completed" && (
+      {customerActions && status === "completed" && reviewed && (
+        <span className="review-submitted-badge"><Star size={15}/> Review submitted</span>
+      )}
+      {customerActions && status === "completed" && !reviewed && (
         <button
           type="button"
           className="secondary small-btn"
@@ -235,10 +238,10 @@ function QuoteCard({ quote, post, onOpen, onRescind, isUpdating = false }) {
   </article>;
 }
 
-function DirectBookings({ jobs, filter, setFilter }) {
+function DirectBookings({ jobs, filter, setFilter, reviews = [] }) {
   return <ActionSection icon={<ClipboardCheck/>} title="Direct bookings" subtitle="Requests sent directly to tradies." filter={<StatusFilter value={filter} onChange={setFilter} options={[["all","All direct bookings"],["requested","Requested"],["accepted","Accepted"],["in_progress","In progress"],["completed","Completed"],["declined","Declined"]]}/>}>
     {jobs.length === 0 && <Empty text="No direct bookings match this filter."/>}
-    {jobs.map(job => <DirectJobCard key={job.id} job={job} role="customer" setMessage={() => {}} loadPrivateData={() => {}} />)}
+    {jobs.map(job => <DirectJobCard key={job.id} job={job} role="customer" reviewed={reviews.some(review => String(review.job_request_id) === String(job.id))} setMessage={() => {}} loadPrivateData={() => {}} />)}
   </ActionSection>;
 }
 

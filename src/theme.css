@@ -3971,6 +3971,54 @@ input[type="file"]::file-selector-button:hover{
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Public profile panels use a light surface and need their own text palette. */
+.tradie-profile-page .trust-score-card,
+.tradie-profile-page .profile-panel{
+  color:#17202b !important;
+}
+
+.tradie-profile-page .trust-score-card .big-rating,
+.tradie-profile-page .profile-panel h2,
+.tradie-profile-page .profile-panel strong{
+  color:#17202b !important;
+}
+
+.tradie-profile-page .trust-score-card p,
+.tradie-profile-page .profile-panel > p,
+.tradie-profile-page .profile-section-head p{
+  color:#526071 !important;
+}
+
+.tradie-profile-page .profile-detail-grid span{
+  color:#526071 !important;
+}
+
+.customer-reviews-card .review-history-toggle{
+  width:100%;
+  margin-bottom:14px;
+  border-color:var(--kt-orange) !important;
+}
+
+.review-complete-notice{
+  margin:0;
+  padding:14px;
+  border:1px solid rgba(249,115,22,.55);
+  border-radius:14px;
+  background:rgba(249,115,22,.10);
+}
+
+.review-form-heading{
+  margin:4px 0 0;
+}
+
+.review-submitted-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:#5eead4;
+  font-weight:850;
+}
 /* =========================================================
    KONNECTATRADIE — JOB WORKSPACE CONVERSATION + TIMELINE
    Final dark-theme alignment

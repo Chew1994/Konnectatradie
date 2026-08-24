@@ -139,6 +139,12 @@ useEffect(() => {
     .then(({ data }) => setSubmittedReviews(data || []));
 }, [profile.id]);
 
+useEffect(() => {
+  const openReviewHistory = () => setShowReviewHistory(true);
+  window.addEventListener("kta-open-review-history", openReviewHistory);
+  return () => window.removeEventListener("kta-open-review-history", openReviewHistory);
+}, []);
+
   async function submit(event) {
     event.preventDefault();
     
@@ -183,11 +189,29 @@ useEffect(() => {
   }
 
   return (
-    <form id="customer-review-form" className="side-card" onSubmit={submit}>
+    <form id="customer-review-form" className="side-card customer-reviews-card" onSubmit={submit}>
       <h3>
         <Star size={17} />
-        Add a review
+        Reviews
       </h3>
+
+      <button
+        type="button"
+        className="secondary review-history-toggle"
+        onClick={() => setShowReviewHistory((current) => !current)}
+      >
+        {showReviewHistory
+          ? "Hide my reviews"
+          : `View my reviews (${submittedReviews.length})`}
+      </button>
+
+      {reviewableJobs.length === 0 ? (
+        <p className="review-complete-notice">
+          All of your completed jobs have been reviewed. Use “View my reviews” above to see what you submitted.
+        </p>
+      ) : (
+        <>
+          <h4 className="review-form-heading">Leave a review</h4>
 
 <Select
   label="Completed job"
@@ -225,15 +249,8 @@ useEffect(() => {
 />
 
       <button className="primary">Submit review</button>
-      <button
-  type="button"
-  className="secondary"
-  onClick={() => setShowReviewHistory((current) => !current)}
->
-  {showReviewHistory
-    ? "Hide my reviews"
-    : `View my reviews (${submittedReviews.length})`}
-</button>
+        </>
+      )}
       {showReviewHistory && (
         <div className="submitted-reviews-list">
           <div className="submitted-reviews-heading">

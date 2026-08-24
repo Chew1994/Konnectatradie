@@ -341,7 +341,7 @@ function App() {
   </Suspense>
 )}
       {tab === "tradie-profile" && selectedTradie && <LazyTradieProfile tradie={selectedTradie} photos={photosFor(selectedTradie.id)} reviews={reviewsFor(selectedTradie.id)} avgRating={avgRating(selectedTradie.id)} setTab={setTab} setSelectedTradie={setSelectedTradie} />}
-      {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
+      {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} reviews={reviews} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
       {tab === "messages" && session && (
   <ConversationsPage
     profile={profile}
@@ -372,7 +372,7 @@ function App() {
       {tab === "quotes-sent" && ["tradesperson","tradie"].includes(profile?.role) && <QuotesSentPage myTradie={myTradie} quotes={quotes} jobPosts={jobPosts} setMessage={setMessage} loadPrivateData={loadPrivateData} setSelectedJobPost={openJobWorkspace} setTab={setTab} />}
       {tab === "jobs-board" && session && <JobsBoard profile={profile} tradespeople={visibleTradies} jobPosts={openJobPosts} myTradie={myTradie} setSelectedTradie={setSelectedTradie} setSelectedJobPost={openJobWorkspace} setTab={setTab} setMessage={setMessage} loadPrivateData={loadPrivateData} loadPublicData={loadPublicData} />}
       {tab === "map" && session && <Suspense fallback={<LoadingState title="Loading map…" text="We are preparing the interactive map and nearby results."/>}><MapView profile={profile} tradespeople={visibleTradies} jobPosts={openJobPosts} setSelectedTradie={setSelectedTradie} setSelectedJobPost={openJobWorkspace} setTab={setTab} /></Suspense>}
-      {tab === "job-chat" && selectedJobPost && <JobChat jobPost={selectedJobPost} profile={profile} messagesFor={messagesFor} quotesFor={quotesFor} tradespeople={tradespeople} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={goTab} />}
+      {tab === "job-chat" && selectedJobPost && <JobChat jobPost={selectedJobPost} profile={profile} messagesFor={messagesFor} quotesFor={quotesFor} tradespeople={tradespeople} reviews={reviews} setMessage={setMessage} loadPrivateData={loadPrivateData} setTab={goTab} />}
       {tab === "job-chat" && !selectedJobPost && selectedJobId && !privateDataLoaded && <LoadingState title="Loading job workspace…" text="We are restoring the job, quotes and conversation from this link."/>}
       {tab === "job-chat" && !selectedJobPost && (privateDataLoaded || !selectedJobId) && <section className="card empty-state"><h2>Job not found</h2><p>This job could not be loaded. Return to your dashboard and open it again.</p><button className="primary" onClick={() => goTab("dashboard")}>Back to dashboard</button></section>}
       {tab === "admin" && profile?.role === "admin" && <Admin tradespeople={tradespeople} documents={documents} setMessage={setMessage} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData} />}
@@ -898,7 +898,7 @@ function JobsBoard({
 }
 
 
-function Dashboard({ profile, session, setMessage, loadProfile, loadPublicData, jobs, jobPosts, quotes, loadPrivateData, documents, myTradie, quotesFor, setSelectedJobPost, setTab }) {
+function Dashboard({ profile, session, setMessage, loadProfile, loadPublicData, jobs, jobPosts, quotes, reviews, loadPrivateData, documents, myTradie, quotesFor, setSelectedJobPost, setTab }) {
   if (!profile) return <LoadingState title="Setting up your dashboard…" text="We are loading your account, jobs and recent activity."/>;
 
   const safeJobs = Array.isArray(jobs) ? jobs : [];
@@ -918,7 +918,7 @@ function Dashboard({ profile, session, setMessage, loadProfile, loadPublicData, 
   const safeQuotesFor = typeof quotesFor === "function" ? quotesFor : (() => []);
 
   return normalisedRole === "customer"
-    ? <CustomerDashboard profile={profile} setTab={setTab} posts={myPosts} jobs={safeJobs} quotesFor={safeQuotesFor} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData}/>
+    ? <CustomerDashboard profile={profile} setTab={setTab} posts={myPosts} jobs={safeJobs} reviews={reviews || []} quotesFor={safeQuotesFor} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData}/>
     : <DashboardErrorBoundary setTab={setTab}><TradieDashboard profile={profile} userId={session?.user?.id} setTab={setTab} jobs={safeJobs} myQuotes={myQuotes} jobPosts={safeJobPosts} myTradie={myTradie} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, quotes: myQuotes.length, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData} documents={safeDocuments}/></DashboardErrorBoundary>;
 }
 
@@ -934,7 +934,7 @@ function scrollToDashboardTitle(titleText) {
   }, 80);
 }
 
-function CustomerDashboard({ profile, setTab, posts, jobs, quotesFor, setSelectedJobPost, stats, setMessage, loadProfile, loadPublicData }) {
+function CustomerDashboard({ profile, setTab, posts, jobs, reviews, quotesFor, setSelectedJobPost, stats, setMessage, loadProfile, loadPublicData }) {
   const [bookingFilter, setBookingFilter] = useState("all");
   const [postFilter, setPostFilter] = useState("all");
   const [dashboardFocus, setDashboardFocus] = useState("");
@@ -1056,7 +1056,7 @@ const openQuotePosts = urgentPosts;
           )}
           {filteredPosts.map(p => <JobPostCard key={p.id} job={p} quotesCount={quotesFor(p.id).length} onOpen={() => {setSelectedJobPost(p); setTab("job-chat");}} />)}
         </ActionSection>
-        <DirectBookings jobs={filteredJobs} filter={bookingFilter} setFilter={setBookingFilter}/>
+        <DirectBookings jobs={filteredJobs} filter={bookingFilter} setFilter={setBookingFilter} reviews={reviews}/>
       </div>
       <aside className="side-rail">
         <ProfileForm profile={profile} setMessage={setMessage} loadProfile={loadProfile}/>
@@ -1672,7 +1672,7 @@ function AvailableJobs({ jobPosts, myTradie, profile, setMessage, loadPrivateDat
   </section>;
 }
 
-function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, setMessage, loadPrivateData, setTab }) {
+function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, reviews = [], setMessage, loadPrivateData, setTab }) {
   const [quoteActionId, setQuoteActionId] = useState(null);
   const [messageSending, setMessageSending] = useState(false);
   const [quoteFilter, setQuoteFilter] = useState("active");
@@ -2078,6 +2078,11 @@ const isCustomer =
 
 const isCompletedJob =
   jobPost.status === "completed";
+const hasCustomerReview = isCustomer && reviews.some(
+  (review) =>
+    String(review.customer_id) === String(profile.id) &&
+    String(review.job_post_id) === String(jobPost.id)
+);
 const messageList = messagesFor(jobPost.id) || [];
 
 function messageSenderLabel(message) {
@@ -2097,9 +2102,11 @@ const nextAction = isCompletedJob
       eyebrow: "Job completed",
       title: "This job has been completed",
       text: isCustomer
-        ? "The completed quote remains available, and you can now review your tradesperson."
+        ? hasCustomerReview
+          ? "Your review has been submitted. You can view it from the Reviews panel on your dashboard."
+          : "The completed quote remains available, and you can now review your tradesperson."
         : "The completed quote and conversation remain available for your records.",
-      button: isCustomer ? "Leave a review" : "View conversation",
+      button: isCustomer ? (hasCustomerReview ? "View my review" : "Leave a review") : "View conversation",
       target: isCustomer ? null : "workspace-conversation"
     }
   : isCustomer
@@ -2184,6 +2191,9 @@ const nextAction = isCompletedJob
               document
                 .getElementById("customer-review-form")
                 ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              if (hasCustomerReview) {
+                window.dispatchEvent(new Event("kta-open-review-history"));
+              }
             }, 120);
             return;
           }
