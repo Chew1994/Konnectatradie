@@ -402,8 +402,14 @@ function Empty({ text }) {
 }
 
 function Status({ status }) {
-  const label = status === "pending_response" ? "Awaiting response" : status === "quote_accepted" ? "Quote accepted" : status === "cancelled" ? "Cancelled" : status || "pending";
-  return <span className={`status status-${String(status).replaceAll(" ", "_")}`}>{label}</span>;
+  const rawStatus = status || "pending";
+  const labels = {
+    pending_response: "Awaiting response",
+    quote_accepted: "Quote accepted",
+    cancelled: "Cancelled"
+  };
+  const label = labels[rawStatus] || String(rawStatus).replaceAll("_", " ");
+  return <span className={`status status-${String(rawStatus).replaceAll(" ", "_")}`}>{label}</span>;
 }
 
 export {

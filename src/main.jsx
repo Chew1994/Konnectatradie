@@ -315,8 +315,10 @@ function App() {
 
       <nav className="nav-links" id="primary-navigation" aria-label="Primary navigation">
         <button onClick={() => goTab("search")}>Find a Tradie</button>
-        {session && <button onClick={() => goTab("dashboard")}>Dashboard</button>}
-        {session && (
+        {session && <button onClick={() => goTab(profile?.role === "admin" ? "admin" : "dashboard")}>
+          {profile?.role === "admin" ? "Trust centre" : "Dashboard"}
+        </button>}
+        {session && profile?.role !== "admin" && (
   <button onClick={() => goTab("messages")}>
     <MessageCircle size={16} />
     Messages
@@ -332,20 +334,19 @@ function App() {
         {session && ["tradesperson","tradie"].includes(profile?.role) && <button onClick={() => goTab("jobs-board")}>Jobs Board</button>}
         {session && profile?.role === "customer" && <button onClick={() => goTab("post-job")}>Post a Job</button>}
         {session && ["tradesperson","tradie"].includes(profile?.role) && <button onClick={() => goTab("quotes-sent")}>Quotes Sent</button>}
-        {profile?.role === "admin" && <button onClick={() => goTab("admin")}>Admin</button>}
         {session && <button onClick={() => goTab("about")}>About</button>}
         {session ? <button onClick={signOut}><LogOut size={16}/> Sign out</button> : <button className="nav-primary" onClick={() => goTab("auth")}>Login / Sign up</button>}
       </nav>
     </header>
     <SuccessMessagePopup message={message} clearMessage={() => setMessage("")} />
     <AccountConfirmedModal open={accountConfirmOpen} />
-    <MessengerPopup profile={profile} messages={messages} jobPosts={jobPosts} setSelectedJobPost={openJobWorkspace} setTab={goTab} />
+    {profile?.role !== "admin" && <MessengerPopup profile={profile} messages={messages} jobPosts={jobPosts} setSelectedJobPost={openJobWorkspace} setTab={goTab} />}
 
     {tab === "home" && <Home setTab={setTab} goPostJob={goPostJob} />}
     {message && <div className="toast">{message}</div>}
 
     <main className="container" id="main-content" tabIndex="-1">
-      {session && <NotificationStrip profile={profile} myPosts={jobPosts.filter(j => j.customer_id === profile?.id)} myQuotes={["tradesperson","tradie"].includes(profile?.role) ? quotes.filter(q => q.tradesperson_id === myTradie?.id) : quotes} jobs={jobs} messages={messages} jobPosts={jobPosts} setSelectedJobPost={openJobWorkspace} setTab={goTab} />}
+      {session && profile?.role !== "admin" && <NotificationStrip profile={profile} myPosts={jobPosts.filter(j => j.customer_id === profile?.id)} myQuotes={["tradesperson","tradie"].includes(profile?.role) ? quotes.filter(q => q.tradesperson_id === myTradie?.id) : quotes} jobs={jobs} messages={messages} jobPosts={jobPosts} setSelectedJobPost={openJobWorkspace} setTab={goTab} />}
       {tab === "auth" && <Auth setTab={setTab} setMessage={setMessage} setAccountConfirmOpen={setAccountConfirmOpen} />}
       {tab === "about" && <AboutUs setTab={setTab} profile={profile} />}
       {tab === "privacy" && <LegalPage type="privacy" setTab={setTab} />}
@@ -374,7 +375,11 @@ function App() {
 )}
       {tab === "tradie-profile" && selectedTradie && <LazyTradieProfile tradie={selectedTradie} photos={photosFor(selectedTradie.id)} reviews={reviewsFor(selectedTradie.id)} avgRating={avgRating(selectedTradie.id)} setTab={setTab} setSelectedTradie={setSelectedTradie} />}
       {tab === "tradie-profile" && !selectedTradie && selectedTradieId && <LoadingState title="Loading tradesperson…" text="We are restoring the profile you were viewing."/>}
-      {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} reviews={reviews} messages={messages} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
+      {tab === "dashboard" && (session
+        ? profile?.role === "admin"
+          ? <Admin tradespeople={tradespeople} documents={documents} setMessage={setMessage} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData} />
+          : <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} reviews={reviews} messages={messages} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary>
+        : <Auth setTab={goTab} setMessage={setMessage}/>)}
       {tab === "messages" && session && (
   <ConversationsPage
     profile={profile}
@@ -2813,7 +2818,7 @@ function Admin({ tradespeople, documents, setMessage, loadPublicData, loadPrivat
           </div>
 
           <div className="button-row">
-            <button className="primary" onClick={()=>approve(t.id,true)}>Approve listing</button>
+            <button className="primary" disabled={Boolean(t.approved)} onClick={()=>approve(t.id,true)}>{t.approved ? "Approved" : "Approve listing"}</button>
             <button className="danger" onClick={()=>approve(t.id,false)}>Reject listing</button>
           </div>
 
