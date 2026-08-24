@@ -2585,6 +2585,8 @@ const nextAction = isCompletedJob
           name="message"
           placeholder="Write a message..."
           autoComplete="off"
+          maxLength={2000}
+          required
         />
 
         <button
