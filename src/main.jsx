@@ -298,7 +298,9 @@ function App() {
   return <div>
     <a className="skip-link" href="#main-content">Skip to main content</a>
     <header className={`nav ${mobileMenuOpen ? "nav-open" : ""}`}>
-      <button className="logo" onClick={() => goTab("home")}><span className="logo-mark"><Hammer size={20}/></span> KonnectATradie</button>
+      <button className="logo brand-logo" aria-label="KonnectATradie home" onClick={() => goTab("home")}>
+        <img src="/konnectatradie-nav-logo.png" alt="KonnectATradie" />
+      </button>
 
       <button
         className="mobile-menu-btn"
