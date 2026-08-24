@@ -99,6 +99,7 @@ export default function TradieDashboard({
   const [workPlanSort, setWorkPlanSort] = useState("recommended");
   const [reviewDrafts, setReviewDrafts] = useState({});
   const [reviewResponseId, setReviewResponseId] = useState(null);
+  const [editingReviewId, setEditingReviewId] = useState(null);
 
   const safeJobs = Array.isArray(jobs) ? jobs : [];
   const safeQuotes = Array.isArray(myQuotes) ? myQuotes : [];
@@ -131,6 +132,7 @@ export default function TradieDashboard({
     }
 
     setReviewDrafts((current) => ({ ...current, [review.id]: response }));
+    setEditingReviewId(null);
     setMessage(review.tradesperson_response ? "Review response updated." : "Review response published.");
     await loadPublicData();
   }
@@ -841,6 +843,7 @@ async function markQuoteJobCompleted(item) {
             <div className="tradie-review-inbox">
               {tradieReviews.map((review) => {
                 const draft = reviewDrafts[review.id] ?? review.tradesperson_response ?? "";
+                const isEditing = editingReviewId === review.id;
                 return (
                   <article className="tradie-review-item" key={review.id}>
                     <div className="tradie-review-heading">
@@ -859,35 +862,72 @@ async function markQuoteJobCompleted(item) {
 
                     <p className="tradie-review-comment">{review.comment || "No written comment provided."}</p>
 
-                    <label className="tradie-review-response-field">
-                      <span>{review.tradesperson_response ? "Edit your public response" : "Write a public response (optional)"}</span>
-                      <textarea
-                        value={draft}
-                        maxLength={1000}
-                        rows={4}
-                        placeholder="Thank the customer or respond professionally to their feedback…"
-                        onChange={(event) => setReviewDrafts((current) => ({
-                          ...current,
-                          [review.id]: event.target.value
-                        }))}
-                      />
-                    </label>
+                    {review.tradesperson_response && !isEditing ? (
+                      <div className="tradie-saved-review-response">
+                        <span>Your public response</span>
+                        <p>{review.tradesperson_response}</p>
+                        {review.tradesperson_responded_at && (
+                          <time dateTime={review.tradesperson_responded_at}>
+                            Published {new Intl.DateTimeFormat("en-IE", { dateStyle: "medium" }).format(new Date(review.tradesperson_responded_at))}
+                          </time>
+                        )}
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() => setEditingReviewId(review.id)}
+                        >
+                          Edit response
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <label className="tradie-review-response-field">
+                          <span>{review.tradesperson_response ? "Edit your public response" : "Write a public response (optional)"}</span>
+                          <textarea
+                            value={draft}
+                            maxLength={1000}
+                            rows={4}
+                            placeholder="Thank the customer or respond professionally to their feedback…"
+                            onChange={(event) => setReviewDrafts((current) => ({
+                              ...current,
+                              [review.id]: event.target.value
+                            }))}
+                          />
+                        </label>
 
-                    <div className="tradie-review-response-actions">
-                      <small>{draft.length}/1000 characters</small>
-                      <button
-                        type="button"
-                        className="primary"
-                        disabled={reviewResponseId === review.id || !draft.trim()}
-                        onClick={() => saveReviewResponse(review)}
-                      >
-                        {reviewResponseId === review.id
-                          ? "Saving…"
-                          : review.tradesperson_response
-                            ? "Update response"
-                            : "Publish response"}
-                      </button>
-                    </div>
+                        <div className="tradie-review-response-actions">
+                          <small>{draft.length}/1000 characters</small>
+                          {review.tradesperson_response && (
+                            <button
+                              type="button"
+                              className="secondary"
+                              disabled={reviewResponseId === review.id}
+                              onClick={() => {
+                                setReviewDrafts((current) => ({
+                                  ...current,
+                                  [review.id]: review.tradesperson_response
+                                }));
+                                setEditingReviewId(null);
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="primary"
+                            disabled={reviewResponseId === review.id || !draft.trim()}
+                            onClick={() => saveReviewResponse(review)}
+                          >
+                            {reviewResponseId === review.id
+                              ? "Saving…"
+                              : review.tradesperson_response
+                                ? "Save changes"
+                                : "Publish response"}
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </article>
                 );
               })}
