@@ -432,6 +432,20 @@ function App() {
           <button type="button" onClick={() => setTab("terms")}>Terms & Conditions</button>
           <button type="button" onClick={() => setTab("legal")}>Legal</button>
         </div>
+        <nav className="footer-social" aria-label="KonnectATradie social media">
+          <a href="https://www.facebook.com/profile.php?id=61591977913268" target="_blank" rel="noopener noreferrer" aria-label="KonnectATradie on Facebook">
+            <span className="social-mark social-mark-facebook" aria-hidden="true">f</span>
+            <span>Facebook</span>
+          </a>
+          <a href="https://www.instagram.com/konnectatradie/" target="_blank" rel="noopener noreferrer" aria-label="KonnectATradie on Instagram">
+            <span className="social-mark social-mark-instagram" aria-hidden="true">◎</span>
+            <span>Instagram</span>
+          </a>
+          <a href="https://www.tiktok.com/@konnectatradie" target="_blank" rel="noopener noreferrer" aria-label="KonnectATradie on TikTok">
+            <span className="social-mark social-mark-tiktok" aria-hidden="true">♪</span>
+            <span>TikTok</span>
+          </a>
+        </nav>
         <p>© 2026 KonnectATradie</p>
       </div>
     </footer>

@@ -447,6 +447,74 @@ footer{
   color:var(--kt-text);
 }
 
+.footer-social{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+}
+
+.footer-social a{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  min-height:42px;
+  padding:8px 12px;
+  border:1px solid var(--kt-border-soft);
+  border-radius:999px;
+  color:var(--kt-text);
+  background:#1a1f25;
+  font-size:13px;
+  font-weight:850;
+  text-decoration:none;
+  transition:border-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+.footer-social a:hover,
+.footer-social a:focus-visible{
+  color:#fed7aa;
+  border-color:var(--kt-orange);
+  transform:translateY(-1px);
+  outline:none;
+}
+
+.social-mark{
+  display:grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  color:#fff;
+  background:var(--kt-orange);
+  font-size:16px;
+  font-weight:950;
+  line-height:1;
+}
+
+.social-mark-facebook{
+  font-family:Arial,sans-serif;
+  font-size:18px;
+}
+
+@media(max-width:760px){
+  .footer-social{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    width:100%;
+  }
+
+  .footer-social a{
+    justify-content:center;
+    padding:9px 8px;
+  }
+}
+
+@media(max-width:420px){
+  .footer-social{
+    grid-template-columns:1fr;
+  }
+}
+
 /* Maintain readability for public/home cards */
 .hero-card img{
   border-color:#272d35 !important;
