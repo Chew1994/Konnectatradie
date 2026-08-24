@@ -2721,6 +2721,7 @@ function Booking({ selectedTradie, profile, setMessage, loadPrivateData, setTab 
 }
 
 function Admin({ tradespeople, documents, setMessage, loadPublicData, loadPrivateData }) {
+  const [adminActionId, setAdminActionId] = useState("");
   async function approve(id, yes) {
     const { error } = await supabase.from("tradesperson_profiles").update({
       approved: yes,
@@ -2732,22 +2733,35 @@ function Admin({ tradespeople, documents, setMessage, loadPublicData, loadPrivat
   }
 
   async function verifyTradie(tradieId, status) {
-    const updates = {
-      verification_status: status,
-      verified_at: status === "verified" ? new Date().toISOString() : null
-    };
+    setAdminActionId(`verify-${tradieId}`);
+    const { error } = await supabase.rpc("review_tradesperson_verification", {
+      p_tradesperson_id: tradieId,
+      p_status: status
+    });
+    setAdminActionId("");
 
-    const { error } = await supabase.from("tradesperson_profiles").update(updates).eq("id", tradieId);
     if (error) return setMessage(error.message);
-
-    await supabase.from("tradesperson_documents").update({
-      verification_status: status,
-      reviewed_at: new Date().toISOString()
-    }).eq("tradesperson_id", tradieId);
 
     setMessage(`Tradesperson marked ${status}.`);
     loadPublicData();
     loadPrivateData();
+  }
+
+  async function viewVerificationDocument(document) {
+    if (!document?.file_url) return setMessage("Verification document path is missing.");
+
+    setAdminActionId(`document-${document.id}`);
+    const { data, error } = await supabase.storage
+      .from("verification-documents")
+      .createSignedUrl(document.file_url, 60);
+    setAdminActionId("");
+
+    if (error || !data?.signedUrl) {
+      setMessage(error?.message || "Verification document could not be opened.");
+      return;
+    }
+
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
   return <section>
@@ -2785,7 +2799,14 @@ function Admin({ tradespeople, documents, setMessage, loadPublicData, loadPrivat
                 <strong>{doc.document_type}</strong>
                 <p>{doc.document_name}</p>
               </div>
-              <a className="secondary small-btn" href={doc.file_url} target="_blank" rel="noreferrer">View</a>
+              <button
+                type="button"
+                className="secondary small-btn"
+                disabled={adminActionId === `document-${doc.id}`}
+                onClick={() => viewVerificationDocument(doc)}
+              >
+                {adminActionId === `document-${doc.id}` ? "Opening..." : "View"}
+              </button>
             </div>)}
           </div>
 
@@ -2795,8 +2816,8 @@ function Admin({ tradespeople, documents, setMessage, loadPublicData, loadPrivat
           </div>
 
           <div className="button-row">
-            <button className="primary" onClick={()=>verifyTradie(t.id,"verified")}>Mark verified</button>
-            <button className="secondary" onClick={()=>verifyTradie(t.id,"rejected")}>Reject verification</button>
+            <button className="primary" disabled={adminActionId === `verify-${t.id}`} onClick={()=>verifyTradie(t.id,"verified")}>Mark verified</button>
+            <button className="secondary" disabled={adminActionId === `verify-${t.id}`} onClick={()=>verifyTradie(t.id,"rejected")}>Reject verification</button>
           </div>
         </div>;
       })}
