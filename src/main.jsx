@@ -2816,8 +2816,22 @@ function Admin({ tradespeople, documents, setMessage, loadPublicData, loadPrivat
           </div>
 
           <div className="button-row">
-            <button className="primary" disabled={adminActionId === `verify-${t.id}`} onClick={()=>verifyTradie(t.id,"verified")}>Mark verified</button>
-            <button className="secondary" disabled={adminActionId === `verify-${t.id}`} onClick={()=>verifyTradie(t.id,"rejected")}>Reject verification</button>
+            <button
+              className="primary"
+              disabled={docs.length === 0 || t.verification_status === "verified" || adminActionId === `verify-${t.id}`}
+              title={docs.length === 0 ? "Upload at least one verification document first" : undefined}
+              onClick={()=>verifyTradie(t.id,"verified")}
+            >
+              {t.verification_status === "verified" ? "Verified" : "Mark verified"}
+            </button>
+            <button
+              className="secondary"
+              disabled={docs.length === 0 || t.verification_status === "rejected" || adminActionId === `verify-${t.id}`}
+              title={docs.length === 0 ? "Upload at least one verification document first" : undefined}
+              onClick={()=>verifyTradie(t.id,"rejected")}
+            >
+              {t.verification_status === "rejected" ? "Verification rejected" : "Reject verification"}
+            </button>
           </div>
         </div>;
       })}

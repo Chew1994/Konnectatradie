@@ -4543,3 +4543,20 @@ input[type="file"]::file-selector-button:hover{
   background:#fff7ed !important;
 }
 
+/* Admin credential details sit on a light panel and require dark copy. */
+.admin-trust-card .trust-meta {
+  background:#f8fafc !important;
+  border-color:#d8dee7 !important;
+}
+
+.admin-trust-card .trust-meta p,
+.admin-trust-card .trust-meta strong {
+  color:#334155 !important;
+}
+
+.admin-trust-card button:disabled {
+  cursor:not-allowed;
+  opacity:.55;
+  box-shadow:none !important;
+}
+
