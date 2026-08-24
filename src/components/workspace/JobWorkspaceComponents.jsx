@@ -1,4 +1,5 @@
-import { AlertTriangle, ClipboardCheck, LoaderCircle, Star } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, ClipboardCheck, LoaderCircle, MessageCircle, Send, Star } from "lucide-react";
 import EmptyState from "../common/EmptyState";
 import { supabase } from "../../lib/supabase";
 
@@ -125,8 +126,53 @@ function JobPostCard({ job, quotesCount, onOpen, priority }) {
   return <article className={`tight-card ${priority ? "priority" : ""}`}><div className="card-head"><div><h3>{job.job_title}</h3><p>{job.trade} · {job.county}</p></div><Status status={job.status}/></div><p className="truncate">{job.job_description}</p><div className="card-actions"><span className="chip">{quotesCount} quotes</span><button className="primary small-btn" onClick={onOpen}>View quotes & chat</button></div></article>;
 }
 
-function DirectJobCard({ job, setMessage, loadPrivateData, role = "tradesperson", reviewed = false }) {
+function DirectJobCard({ job, setMessage, loadPrivateData, role = "tradesperson", reviewed = false, messages = [], profileId }) {
   const status = lifecycleStatus(job);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messageSending, setMessageSending] = useState(false);
+  const directMessages = messages.filter(
+    (item) => String(item.job_request_id) === String(job.id)
+  );
+  const chatAvailable = ["accepted", "in_progress", "completed", "reviewed"].includes(status);
+
+  async function sendDirectMessage(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = String(new FormData(form).get("message") || "").trim();
+    if (!message || !profileId) return;
+
+    setMessageSending(true);
+    const { error } = await supabase.from("job_messages").insert({
+      job_post_id: null,
+      job_request_id: job.id,
+      sender_id: profileId,
+      message
+    });
+    setMessageSending(false);
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    fetch("/.netlify/functions/notify-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token}`
+      },
+      body: JSON.stringify({
+        event: "direct_message_received",
+        jobRequestId: job.id,
+        messageText: message
+      })
+    }).catch(() => {});
+
+    form.reset();
+    setMessage("Message sent.");
+    await loadPrivateData();
+  }
 
   async function updateJob(nextStatus) {
     const updates = {
@@ -206,7 +252,47 @@ fetch("/.netlify/functions/notify-booking-status", {
           Leave review below
         </button>
       )}
+      {chatAvailable && (
+        <button
+          type="button"
+          className="secondary small-btn"
+          onClick={() => setChatOpen((current) => !current)}
+        >
+          <MessageCircle size={15}/>
+          {chatOpen ? "Close chat" : "Open chat"}
+        </button>
+      )}
     </div>
+
+    {chatAvailable && chatOpen && (
+      <section className="direct-booking-chat" aria-label="Direct booking conversation">
+        <div className="direct-booking-chat-heading">
+          <strong>Booking conversation</strong>
+          <span>{status === "completed" || status === "reviewed" ? "Completed booking record" : "Arrange the booking details"}</span>
+        </div>
+        <div className="direct-booking-messages">
+          {directMessages.length === 0 && (
+            <p className="muted">No messages yet. Start the conversation here.</p>
+          )}
+          {directMessages.map((item) => {
+            const mine = String(item.sender_id) === String(profileId);
+            return (
+              <article className={`direct-booking-message ${mine ? "mine" : "theirs"}`} key={item.id}>
+                <small>{mine ? "You" : role === "customer" ? "Tradesperson" : "Customer"}</small>
+                <strong>{item.message}</strong>
+                {item.created_at && <time>{new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>}
+              </article>
+            );
+          })}
+        </div>
+        <form className="direct-booking-message-form" onSubmit={sendDirectMessage}>
+          <input name="message" placeholder="Write a message..." maxLength={2000} autoComplete="off" required/>
+          <button className="primary" disabled={messageSending} aria-label="Send message">
+            {messageSending ? "..." : <Send size={17}/>}
+          </button>
+        </form>
+      </section>
+    )}
   </article>;
 }
 
@@ -238,10 +324,10 @@ function QuoteCard({ quote, post, onOpen, onRescind, isUpdating = false }) {
   </article>;
 }
 
-function DirectBookings({ jobs, filter, setFilter, reviews = [] }) {
+function DirectBookings({ jobs, filter, setFilter, reviews = [], messages = [], profileId, setMessage, loadPrivateData }) {
   return <ActionSection icon={<ClipboardCheck/>} title="Direct bookings" subtitle="Requests sent directly to tradies." filter={<StatusFilter value={filter} onChange={setFilter} options={[["all","All direct bookings"],["requested","Requested"],["accepted","Accepted"],["in_progress","In progress"],["completed","Completed"],["declined","Declined"]]}/>}>
     {jobs.length === 0 && <Empty text="No direct bookings match this filter."/>}
-    {jobs.map(job => <DirectJobCard key={job.id} job={job} role="customer" reviewed={reviews.some(review => String(review.job_request_id) === String(job.id))} setMessage={() => {}} loadPrivateData={() => {}} />)}
+    {jobs.map(job => <DirectJobCard key={job.id} job={job} role="customer" reviewed={reviews.some(review => String(review.job_request_id) === String(job.id))} messages={messages} profileId={profileId} setMessage={setMessage} loadPrivateData={loadPrivateData} />)}
   </ActionSection>;
 }
 

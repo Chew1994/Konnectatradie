@@ -295,6 +295,45 @@ if (body.event === "booking_request") {
     : "Open the job chat to read and reply.";
 }
 
+if (body.event === "direct_message_received") {
+  const request = await jobRequestById(body.jobRequestId);
+
+  if (!request) {
+    return response(404, { message: "Booking request not found." });
+  }
+
+  const status = request.lifecycle_status || request.status;
+  if (!["accepted", "in_progress", "completed", "reviewed"].includes(status)) {
+    return response(403, { message: "This booking conversation is not available." });
+  }
+
+  const tradie = await tradieById(request.tradesperson_id);
+  if (!tradie) {
+    return response(404, { message: "Tradesperson not found." });
+  }
+
+  const isCustomer = request.customer_id === user.id;
+  const isTradie = tradie.user_id === user.id;
+  if (!isCustomer && !isTradie) {
+    return response(403, { message: "You are not allowed to send this notification." });
+  }
+
+  const recipientUserId = isCustomer ? tradie.user_id : request.customer_id;
+  const recipientProfile = await profileById(recipientUserId);
+  if (!recipientProfile) {
+    return response(404, { message: "Recipient not found." });
+  }
+
+  recipient = recipientProfile.email;
+  subject = "New direct booking message on KonnectATradie";
+  title = `New message about your ${request.trade || "direct booking"}`;
+
+  const cleanMessage = String(body.messageText || "").slice(0, 220);
+  detail = cleanMessage
+    ? `Message preview: ${cleanMessage}`
+    : "Open the direct booking conversation to read and reply.";
+}
+
     if (!recipient) {
       return response(202, { message: "Notification recorded, but no recipient email was found." });
     }

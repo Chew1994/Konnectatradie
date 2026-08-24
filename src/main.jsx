@@ -341,7 +341,7 @@ function App() {
   </Suspense>
 )}
       {tab === "tradie-profile" && selectedTradie && <LazyTradieProfile tradie={selectedTradie} photos={photosFor(selectedTradie.id)} reviews={reviewsFor(selectedTradie.id)} avgRating={avgRating(selectedTradie.id)} setTab={setTab} setSelectedTradie={setSelectedTradie} />}
-      {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} reviews={reviews} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
+      {tab === "dashboard" && (session ? <DashboardErrorBoundary setTab={goTab}><Dashboard profile={profile} session={session} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} jobs={jobs} jobPosts={jobPosts} quotes={quotes} reviews={reviews} messages={messages} loadPrivateData={loadPrivateData} documents={documents} myTradie={myTradie} quotesFor={quotesFor} setSelectedJobPost={openJobWorkspace} setTab={goTab} /></DashboardErrorBoundary> : <Auth setTab={goTab} setMessage={setMessage}/>)}
       {tab === "messages" && session && (
   <ConversationsPage
     profile={profile}
@@ -898,7 +898,7 @@ function JobsBoard({
 }
 
 
-function Dashboard({ profile, session, setMessage, loadProfile, loadPublicData, jobs, jobPosts, quotes, reviews, loadPrivateData, documents, myTradie, quotesFor, setSelectedJobPost, setTab }) {
+function Dashboard({ profile, session, setMessage, loadProfile, loadPublicData, jobs, jobPosts, quotes, reviews, messages, loadPrivateData, documents, myTradie, quotesFor, setSelectedJobPost, setTab }) {
   if (!profile) return <LoadingState title="Setting up your dashboard…" text="We are loading your account, jobs and recent activity."/>;
 
   const safeJobs = Array.isArray(jobs) ? jobs : [];
@@ -918,8 +918,8 @@ function Dashboard({ profile, session, setMessage, loadProfile, loadPublicData, 
   const safeQuotesFor = typeof quotesFor === "function" ? quotesFor : (() => []);
 
   return normalisedRole === "customer"
-    ? <CustomerDashboard profile={profile} setTab={setTab} posts={myPosts} jobs={safeJobs} reviews={reviews || []} quotesFor={safeQuotesFor} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData}/>
-    : <DashboardErrorBoundary setTab={setTab}><TradieDashboard profile={profile} userId={session?.user?.id} setTab={setTab} jobs={safeJobs} myQuotes={myQuotes} jobPosts={safeJobPosts} myTradie={myTradie} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, quotes: myQuotes.length, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData} documents={safeDocuments}/></DashboardErrorBoundary>;
+    ? <CustomerDashboard profile={profile} setTab={setTab} posts={myPosts} jobs={safeJobs} reviews={reviews || []} messages={messages || []} quotesFor={safeQuotesFor} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData}/>
+    : <DashboardErrorBoundary setTab={setTab}><TradieDashboard profile={profile} userId={session?.user?.id} setTab={setTab} jobs={safeJobs} myQuotes={myQuotes} jobPosts={safeJobPosts} messages={messages || []} myTradie={myTradie} setSelectedJobPost={setSelectedJobPost} stats={{action: actionBookings.length, accepted, quotes: myQuotes.length, pendingQuotes}} setMessage={setMessage} loadProfile={loadProfile} loadPublicData={loadPublicData} loadPrivateData={loadPrivateData} documents={safeDocuments}/></DashboardErrorBoundary>;
 }
 
 
@@ -934,7 +934,7 @@ function scrollToDashboardTitle(titleText) {
   }, 80);
 }
 
-function CustomerDashboard({ profile, setTab, posts, jobs, reviews, quotesFor, setSelectedJobPost, stats, setMessage, loadProfile, loadPublicData }) {
+function CustomerDashboard({ profile, setTab, posts, jobs, reviews, messages, quotesFor, setSelectedJobPost, stats, setMessage, loadProfile, loadPublicData, loadPrivateData }) {
   const [bookingFilter, setBookingFilter] = useState("all");
   const [postFilter, setPostFilter] = useState("all");
   const [dashboardFocus, setDashboardFocus] = useState("");
@@ -1056,7 +1056,7 @@ const openQuotePosts = urgentPosts;
           )}
           {filteredPosts.map(p => <JobPostCard key={p.id} job={p} quotesCount={quotesFor(p.id).length} onOpen={() => {setSelectedJobPost(p); setTab("job-chat");}} />)}
         </ActionSection>
-        <DirectBookings jobs={filteredJobs} filter={bookingFilter} setFilter={setBookingFilter} reviews={reviews}/>
+        <DirectBookings jobs={filteredJobs} filter={bookingFilter} setFilter={setBookingFilter} reviews={reviews} messages={messages} profileId={profile.id} setMessage={setMessage} loadPrivateData={loadPrivateData}/>
       </div>
       <aside className="side-rail">
         <ProfileForm profile={profile} setMessage={setMessage} loadProfile={loadProfile}/>

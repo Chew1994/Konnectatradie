@@ -81,6 +81,7 @@ export default function TradieDashboard({
   jobs,
   myQuotes,
   jobPosts,
+  messages = [],
   myTradie,
   setSelectedJobPost,
   stats,
@@ -597,6 +598,8 @@ async function markQuoteJobCompleted(item) {
                 key={job.id}
                 job={job}
                 role="tradesperson"
+                messages={messages}
+                profileId={profile.id}
                 setMessage={setMessage}
                 loadPrivateData={loadPrivateData}
               />
@@ -732,6 +735,8 @@ async function markQuoteJobCompleted(item) {
                   key={`direct-${job.id}`}
                   job={job}
                   role="tradesperson"
+                  messages={messages}
+                  profileId={profile.id}
                   setMessage={setMessage}
                   loadPrivateData={loadPrivateData}
                 />
@@ -763,6 +768,8 @@ async function markQuoteJobCompleted(item) {
                   key={`completed-direct-${job.id}`}
                   job={job}
                   role="tradesperson"
+                  messages={messages}
+                  profileId={profile.id}
                   setMessage={setMessage}
                   loadPrivateData={loadPrivateData}
                 />
@@ -799,6 +806,8 @@ async function markQuoteJobCompleted(item) {
                   key={job.id}
                   job={job}
                   role="tradesperson"
+                  messages={messages}
+                  profileId={profile.id}
                   setMessage={setMessage}
                   loadPrivateData={loadPrivateData}
                 />
