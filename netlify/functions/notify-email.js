@@ -242,20 +242,20 @@ if (body.event === "booking_request") {
     });
   }
 
-  const acceptedQuotes = await supabaseRows(
+  const matchingQuotes = await supabaseRows(
     "job_quotes",
-    `job_post_id=eq.${encodeURIComponent(job.id)}&status=eq.accepted&select=id,tradesperson_id&limit=1`
+    `id=eq.${encodeURIComponent(body.quoteId || "")}&job_post_id=eq.${encodeURIComponent(job.id)}&select=id,tradesperson_id,status&limit=1`
   );
 
-  const acceptedQuote = acceptedQuotes[0];
+  const messageQuote = matchingQuotes[0];
 
-  if (!acceptedQuote) {
+  if (!messageQuote || !["pending", "accepted", "completed"].includes(messageQuote.status)) {
     return response(404, {
-      message: "Accepted quote not found."
+      message: "Active quote conversation not found."
     });
   }
 
-  const tradie = await tradieById(acceptedQuote.tradesperson_id);
+  const tradie = await tradieById(messageQuote.tradesperson_id);
 
   if (!tradie) {
     return response(404, {

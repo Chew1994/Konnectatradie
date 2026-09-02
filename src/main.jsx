@@ -287,7 +287,11 @@ function App() {
   const photosFor = (id) => portfolio.filter((p) => p.tradesperson_id === id).slice(0, 5);
   const reviewsFor = (id) => reviews.filter((r) => r.tradesperson_id === id);
   const quotesFor = (jobPostId) => quotes.filter(q => q.job_post_id === jobPostId);
-  const messagesFor = (jobPostId) => messages.filter(m => m.job_post_id === jobPostId);
+  const messagesFor = (jobPostId, quoteId) => messages.filter(
+    (message) =>
+      String(message.job_post_id) === String(jobPostId) &&
+      String(message.quote_id) === String(quoteId)
+  );
   const avgRating = (id) => {
     const list = reviewsFor(id);
     if (!list.length) return "New";
@@ -1736,6 +1740,7 @@ function JobChat({ jobPost, profile, messagesFor, quotesFor, tradespeople, revie
   const [quoteSubmitting, setQuoteSubmitting] = useState(false);
   const [recentlySubmittedQuote, setRecentlySubmittedQuote] = useState(null);
   const [quoteStatusOverrides, setQuoteStatusOverrides] = useState({});
+  const [selectedConversationQuoteId, setSelectedConversationQuoteId] = useState(null);
 
 async function submitQuote(e) {
   e.preventDefault();
@@ -1816,13 +1821,18 @@ async function submitQuote(e) {
     const form = e.currentTarget;
     const formData = new FormData(form);
     const msg = String(formData.get("message") || "").trim();
-    if (!msg) return;
+    if (!msg || !conversationQuote?.id) {
+      setMessage("Choose a quote conversation before sending a message.");
+      return;
+    }
 
     setMessageSending(true);
     const { error } = await supabase
       .from("job_messages")
       .insert({
         job_post_id: jobPost.id,
+        job_request_id: null,
+        quote_id: conversationQuote.id,
         sender_id: profile.id,
         message: msg
       });
@@ -1833,16 +1843,16 @@ async function submitQuote(e) {
       return;
     }
 
-    const accepted = quotesFor(jobPost.id).find((q) => q.status === "accepted");
-    const tradie = accepted
-      ? tradespeople.find((t) => t.id === accepted.tradesperson_id)
-      : null;
+    const tradie = tradespeople.find(
+      (item) => item.id === conversationQuote.tradesperson_id
+    );
     const recipientUserId =
       profile.role === "customer" ? tradie?.user_id : jobPost.customer_id;
 
     sendPlatformNotification({
       event: "message_received",
       jobPostId: jobPost.id,
+      quoteId: conversationQuote.id,
       senderUserId: profile.id,
       recipientUserId,
       messageText: msg
@@ -1886,6 +1896,7 @@ async function submitQuote(e) {
       }));
 
       setRecentlyAcceptedQuote(accepted);
+      setSelectedConversationQuoteId(q.id);
       setQuoteFilter("accepted");
 
       sendPlatformNotification({
@@ -2112,6 +2123,20 @@ const myActiveQuote =
 const isCustomer =
   profile.role === "customer";
 
+const conversationQuote =
+  qlist.find((quote) => quote.id === selectedConversationQuoteId) ||
+  winningQuote ||
+  (!isCustomer ? myActiveQuote : qlist.length === 1 ? qlist[0] : null);
+
+const conversationTradie = conversationQuote
+  ? tradespeople.find((tradie) => tradie.id === conversationQuote.tradesperson_id)
+  : null;
+
+const conversationTradieName =
+  conversationTradie?.business_name ||
+  conversationTradie?.contact_name ||
+  "Tradesperson";
+
 const isCompletedJob =
   jobPost.status === "completed";
 const hasCustomerReview = isCustomer && reviews.some(
@@ -2119,11 +2144,13 @@ const hasCustomerReview = isCustomer && reviews.some(
     String(review.customer_id) === String(profile.id) &&
     String(review.job_post_id) === String(jobPost.id)
 );
-const messageList = messagesFor(jobPost.id) || [];
+const messageList = conversationQuote
+  ? messagesFor(jobPost.id, conversationQuote.id) || []
+  : [];
 
 function messageSenderLabel(message) {
   if (message.sender_id === profile.id) return "You";
-  return isCustomer ? acceptedTradieName : "Customer";
+  return isCustomer ? conversationTradieName : "Customer";
 }
 
 function scrollToWorkspaceSection(sectionId) {
@@ -2413,6 +2440,22 @@ const nextAction = isCompletedJob
 
               {q.note && <p>{q.note}</p>}
 
+              {!["declined", "rescinded", "cancelled"].includes(q.status) && (
+                <div className="quote-actions quote-chat-actions">
+                  <button
+                    type="button"
+                    className="secondary small-btn"
+                    onClick={() => {
+                      setSelectedConversationQuoteId(q.id);
+                      setTimeout(() => scrollToWorkspaceSection("workspace-conversation"), 0);
+                    }}
+                  >
+                    <MessageCircle size={15}/>
+                    {selectedConversationQuoteId === q.id ? "Chat selected" : `Private chat with ${tradieName}`}
+                  </button>
+                </div>
+              )}
+
               {q.status === "pending" && (
                 <>
                   <div className="quote-decision-guide">
@@ -2513,6 +2556,18 @@ const nextAction = isCompletedJob
     }
   />
 </div>
+
+{conversationQuote && (
+  <div className="conversation-participant" role="status">
+    Private conversation with <strong>{conversationTradieName}</strong>
+  </div>
+)}
+
+{!conversationQuote && (
+  <div className="conversation-selection-required" role="status">
+    Select a quote above to open its private conversation.
+  </div>
+)}
 
 <div className="chat-guidance">
   <strong>
@@ -2616,7 +2671,7 @@ const nextAction = isCompletedJob
         })}
       </div>
 
-      <form onSubmit={sendMessage} className="message-form workspace-message-form">
+      {conversationQuote && <form onSubmit={sendMessage} className="message-form workspace-message-form">
         <input
           name="message"
           placeholder="Write a message..."
@@ -2632,7 +2687,7 @@ const nextAction = isCompletedJob
         >
           {messageSending ? "..." : <Send size={18} />}
         </button>
-      </form>
+      </form>}
     </div>
 
     <aside className="side-card workspace-timeline">

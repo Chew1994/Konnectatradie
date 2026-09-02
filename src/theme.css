@@ -4435,6 +4435,29 @@ input[type="file"]::file-selector-button:hover{
   color: var(--kt-text-secondary) !important;
 }
 
+/* Dark review empty states sit inside a light public-profile panel. */
+.tradie-profile-page .reviews-panel .empty strong {
+  color: var(--kt-text) !important;
+}
+
+.tradie-card .review-micro-row {
+  color: var(--kt-text-secondary) !important;
+}
+
+.conversation-participant,
+.conversation-selection-required {
+  margin: 12px 0;
+  padding: 11px 13px;
+  border: 1px solid rgba(249,115,22,.45);
+  border-radius: 12px;
+  color: var(--kt-text-secondary);
+  background: rgba(249,115,22,.08);
+}
+
+.conversation-participant strong {
+  color: var(--kt-text) !important;
+}
+
 /* Confirmation popups use white surfaces, so override the dark-theme type. */
 .success-popup-box h2,
 .account-confirm-modal h2 {
